@@ -1,6 +1,7 @@
 require "json"
 require "spoved/logger"
 require "./attributes"
+require "./error"
 
 abstract class Epidote::Model
   include JSON::Serializable
@@ -14,6 +15,11 @@ abstract class Epidote::Model
   # Internal methoid to update a record
   protected abstract def _update_record
 
+  # Will check if the record is valid and return `false` if it is not
+  abstract def valid? : Bool
+  # Will check if the record is valid and raise an error if it is not
+  abstract def valid! : Bool
+
   # This will save the record to the database but will raise any errors encountered
   # ```
   # model = MyModel.new(name: "one", unique_name: "model1")
@@ -23,6 +29,7 @@ abstract class Epidote::Model
   # ```
   def save!
     self._insert_record
+    self
   end
 
   # This will save the record to the database but will suppress and log any errors encountered
@@ -45,7 +52,7 @@ abstract class Epidote::Model
   # model.destroy!
   # model.destroy! # Raises error
   # ```
-  def destroy!
+  def destroy! : Nil
     self._delete_record
   end
 
@@ -56,7 +63,7 @@ abstract class Epidote::Model
   # model.destroy
   # model.destroy # logs error only
   # ```
-  def destroy
+  def destroy : Nil
     self.destroy!
   rescue ex
     logger.error { ex }
@@ -72,6 +79,7 @@ abstract class Epidote::Model
   # ```
   def update!
     self._update_record
+    self
   end
 
   # This will update the record with any changes made to the instance. Suppresses any errors encountered

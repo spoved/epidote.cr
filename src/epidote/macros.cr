@@ -92,8 +92,7 @@ abstract class Epidote::Model
           )
           end
 
-          # Will check if the record is valid and return `false` if it is not
-          def valid?
+          def valid? : Bool
             {% for name, anno in properties %}
               {% if anno[:not_nil] %}
                 if @{{name}}.nil?
@@ -104,15 +103,18 @@ abstract class Epidote::Model
             true
           end
 
-          # Will check if the record is valid and raise an error if it is not
-          def valid!
+          def valid! : Bool
+            error : Epidote::Error::ValidateFailed? = nil
             {% for name, anno in properties %}
               {% if anno[:not_nil] %}
                 if @{{name}}.nil?
-                  raise "Attribute #{name} cannot be null!"
+                  error = Epidote::Error::ValidateFailed.new if error.nil?
+                  error.attributes << {{name.id.stringify}}
                 end
               {% end %}
             {% end %}
+            raise error unless error.nil?
+            true
           end
         {% end %}
       {% end %}
