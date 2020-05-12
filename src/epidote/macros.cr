@@ -4,7 +4,7 @@ require "json"
 abstract class Epidote::Model
   macro attribute(name, type, **options)
     @[::JSON::Field]
-    setter {{name.id}} : {{type}} {% if options[:default] %}= {{options[:default]}} {% end %}
+    setter {{name.id}} : {{type}}? = {% if options[:default] %} {{options[:default]}} {% else %} nil {% end %}
 
     @[::Epidote::DB::Model::Attr(
       name: :{{name.id}},
@@ -13,9 +13,15 @@ abstract class Epidote::Model
       {{k}}: {{v}},
       {% end %}
     )]
+    {% if options[:not_nil] %}
     def {{name.id}} : {{type}}
+      @{{name.id}}.not_nil!
+    end
+    {% else %}
+    def {{name.id}} : {{type}}?
       @{{name.id}}
     end
+    {% end %}
   end
 
   macro attributes(**args)
@@ -81,17 +87,32 @@ abstract class Epidote::Model
 
           def initialize(
             {% for name, anno in properties %}
-              {% unless anno[:default] %}
-                @{{name}} : {{ anno[:type] }},
-              {% end %}
-            {% end %}
-
-            {% for name, anno in properties %}
-              {% if anno[:default] %}
-                @{{name}} : {{ anno[:type] }} = {{anno[:default]}},
-              {% end %}
+              @{{name}} : {{ anno[:type] }}? = {% if anno[:default] %} {{anno[:default]}} {% else %} nil {% end %},
             {% end %}
           )
+          end
+
+          # Will check if the record is valid and return `false` if it is not
+          def valid?
+            {% for name, anno in properties %}
+              {% if anno[:not_nil] %}
+                if @{{name}}.nil?
+                  return false
+                end
+              {% end %}
+            {% end %}
+            true
+          end
+
+          # Will check if the record is valid and raise an error if it is not
+          def valid!
+            {% for name, anno in properties %}
+              {% if anno[:not_nil] %}
+                if @{{name}}.nil?
+                  raise "Attribute #{name} cannot be null!"
+                end
+              {% end %}
+            {% end %}
           end
         {% end %}
       {% end %}
