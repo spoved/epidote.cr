@@ -7,3 +7,18 @@ authors:
 crystal: 0.34.0
 
 license: MIT
+
+dependencies:
+  spoved:
+    github: spoved/spoved.cr
+  mongo:
+    github: kalinon/mongo.cr
+    branch: master
+  mysql:
+    github: crystal-lang/crystal-mysql
+development_dependencies:
+  ameba:
+    github: veelenga/ameba
+    version: ~> 0.10.0
+  dotenv:
+    github: gdotdesign/cr-dotenv

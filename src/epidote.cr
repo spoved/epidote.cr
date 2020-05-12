@@ -1,3 +1,5 @@
 module Epidote; end
 
-require "./epidote/*"
+require "./epidote/version"
+require "./epidote/macros"
+require "./epidote/model"
