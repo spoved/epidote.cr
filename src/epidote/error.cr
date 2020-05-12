@@ -1,5 +1,9 @@
 class Epidote::Error < Exception
   class ValidateFailed < Epidote::Error
-    @attributes = Array(String).new
+    property nil_attrs = Array(String).new
+
+    def message : String?
+      "The following attributes cannot be nil: #{nil_attrs.join(',')}"
+    end
   end
 end

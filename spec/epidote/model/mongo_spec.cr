@@ -26,7 +26,7 @@ describe MyModel::Mongo do
 
     it "#valid!" do
       model = MyModel::Mongo.new(name: "my_name", unique_name: "model1")
-      expect_raises Exception do
+      expect_raises Epidote::Error::ValidateFailed, "The following attributes cannot be nil: not_nil_value" do
         model.valid!
       end
 
@@ -67,7 +67,7 @@ describe MyModel::Mongo do
     describe "that should be not nil" do
       it "raises exception" do
         model = MyModel::Mongo.new(name: "my_name", unique_name: "model1")
-        expect_raises Exception do
+        expect_raises NilAssertionError do
           model.not_nil_value
         end
       end

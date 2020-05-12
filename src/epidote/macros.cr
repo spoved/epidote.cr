@@ -109,7 +109,7 @@ abstract class Epidote::Model
               {% if anno[:not_nil] %}
                 if @{{name}}.nil?
                   error = Epidote::Error::ValidateFailed.new if error.nil?
-                  error.attributes << {{name.id.stringify}}
+                  error.nil_attrs << {{name.id.stringify}}
                 end
               {% end %}
             {% end %}
