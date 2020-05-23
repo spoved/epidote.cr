@@ -2,6 +2,7 @@ require "json"
 require "spoved/logger"
 require "./attributes"
 require "./error"
+require "./adapter"
 
 abstract class Epidote::Model
   include JSON::Serializable
@@ -19,6 +20,8 @@ abstract class Epidote::Model
   abstract def valid? : Bool
   # Will check if the record is valid and raise an error if it is not
   abstract def valid! : Bool
+
+  abstract def adapter : Epidote::Adapter.class
 
   # This will save the record to the database but will raise any errors encountered
   # ```

@@ -5,4 +5,13 @@ abstract class Epidote::Model::MySQL < Epidote::Model
       {{name.id.stringify}}
     end
   end
+
+  macro _epidote_methods
+    macro finished
+      {% verbatim do %}
+        {% begin %}
+        {% end %}
+      {% end %}
+    end
+  end
 end

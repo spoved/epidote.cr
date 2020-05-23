@@ -53,6 +53,7 @@ abstract class Epidote::Model
       spoved_logger(bind: false)
       define_static_methods
       initializers
+      {{@type.id}}._epidote_methods
     {% end %}
   end
 
@@ -115,6 +116,51 @@ abstract class Epidote::Model
             {% end %}
             raise error unless error.nil?
             true
+          end
+
+          # All the possible `typeof(val)` for each property
+          alias ValTypes = Nil {% for name, anno in properties %} | {{anno[:type]}} {% end %}
+
+          ATTR_TYPES = {
+            {% for name, anno in properties %} {{name.id}} => {{anno[:type]}}, {% end %}
+          }
+
+          ATTR_NAMES = {{ properties.keys.map &.id }}
+
+          # Array of all the attributes names
+          protected def self.attributes : Array(Symbol)
+            ATTR_NAMES
+          end
+
+          # Return an array containing all of the `{{@type}}` records
+          def self.all : Array({{@type}})
+            self._query_all
+          end
+
+          def get(name : Symbol)
+            case name
+            {% for name, anno in properties %}
+            when :{{name.id}}
+              self.{{name.id}}
+            {% end %}
+            else
+              raise Epidote::Error::UnknownAttribute.new "Unknown attribute #{name}"
+            end
+          end
+
+          def set(name : Symbol, value : ValTypes)
+            case name
+            {% for name, anno in properties %}
+            when :{{name.id}}
+              if value.is_a?({{anno[:type].id}})
+                self.{{name.id}} = value.as({{anno[:type].id}})
+              else
+                raise Epidote::Error.new "Attribute #{name} must be type {{anno[:type].id}} not #{typeof(value)}"
+              end
+            {% end %}
+            else
+              raise Epidote::Error::UnknownAttribute.new "Unknown attribute #{name}"
+            end
           end
         {% end %}
       {% end %}

@@ -6,4 +6,6 @@ class Epidote::Error < Exception
       "The following attributes cannot be nil: #{nil_attrs.join(',')}"
     end
   end
+
+  class UnknownAttribute < Epidote::Error; end
 end
