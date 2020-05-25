@@ -6,17 +6,8 @@ abstract class Epidote::Model
     @[::JSON::Field]
     @{{name.id}} : {{type}}? = {% if options[:default] %} {{options[:default]}} {% else %} nil {% end %}
 
-    def {{name.id}}=(val : {{type}}?)
-      {% if options[:default] %}
-        if val.nil?
-          @{{name.id}} = {{options[:default]}}
-        else
-          @{{name.id}} = val
-        end
-      {% else %} 
-        @{{name.id}} = val
-      {% end %}
-
+    def {{name.id}}=(val : {{type}})
+      @{{name.id}} = val
       mark_dirty
     end
 

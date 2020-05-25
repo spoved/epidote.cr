@@ -41,6 +41,17 @@ abstract class Epidote::Model
 
   protected def mark_dirty
     self.dirty = true
+    self
+  end
+
+  protected def mark_clean
+    self.dirty = false
+    self
+  end
+
+  protected def mark_saved
+    self.saved = true
+    self
   end
 
   # This will save the record to the database but will raise any errors encountered
@@ -68,6 +79,7 @@ abstract class Epidote::Model
     self.save!
   rescue ex
     logger.error { ex }
+    self
   end
 
   # This will delete the record but will raise any errors encountered
@@ -78,6 +90,8 @@ abstract class Epidote::Model
   # model.destroy! # Raises error
   # ```
   def destroy! : Nil
+    raise Epidote::Error::MissingRecord.new unless saved?
+
     self._delete_record
     self.saved = false
     mark_dirty
@@ -105,6 +119,8 @@ abstract class Epidote::Model
   # model.update! # Will raise an error
   # ```
   def update!
+    raise Epidote::Error::MissingRecord.new unless saved?
+
     self._update_record
     self.dirty = false
     self
@@ -122,5 +138,6 @@ abstract class Epidote::Model
     self.update!
   rescue ex
     logger.error { ex }
+    self
   end
 end

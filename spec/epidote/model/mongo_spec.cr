@@ -139,6 +139,16 @@ describe Epidote::Model::Mongo do
           model.set :not_an_attribute, "value"
         end
       end
+
+      it "raises error on invalid value" do
+        model = MyModel::Mongo.new(name: "my_name", unique_name: "model1")
+        model.set :name, "new_name"
+        model.name.should eq "new_name"
+
+        expect_raises Epidote::Error, "Attribute not_nil_value must be type Int32 not Nil" do
+          model.set :not_nil_value, nil
+        end
+      end
     end
 
     describe "#get" do
@@ -167,6 +177,12 @@ describe Epidote::Model::Mongo do
         model.name = "new_name"
         model.name.should eq "new_name"
         model.dirty?.should be_true
+      end
+
+      describe "to a invalid value" do
+        pending "raises error on invalid value" do
+          # model = MyModel::Mongo.new(name: "my_name", unique_name: "model1", not_nil_value: 1)
+        end
       end
     end
   end
@@ -292,6 +308,15 @@ describe Epidote::Model::Mongo do
             model.update
             model.saved?.should be_true
           end
+
+          it "changes #dirty?" do
+            model = valid_mongo_model.save!
+            model.dirty?.should be_false
+            model.name = "new_name"
+            model.dirty?.should be_true
+            model.update
+            model.dirty?.should be_false
+          end
         end
 
         describe "#update!" do
@@ -299,7 +324,7 @@ describe Epidote::Model::Mongo do
             model = valid_mongo_model.save!
             orig_name = model.name
             model.name = "new_name"
-            model.update
+            model.update!
 
             f_model = MyModel::Mongo.find(model.id).not_nil!
             f_model.id.to_s.should eq model.id.to_s
@@ -312,12 +337,21 @@ describe Epidote::Model::Mongo do
             model = valid_mongo_model.save!
             model.saved?.should be_true
             model.name = "new_name"
-            model.update
+            model.update!
             model.saved?.should be_true
+          end
+
+          it "changes #dirty?" do
+            model = valid_mongo_model.save!
+            model.dirty?.should be_false
+            model.name = "new_name"
+            model.dirty?.should be_true
+            model.update!
+            model.dirty?.should be_false
           end
         end
 
-        describe "#delete" do
+        describe "#destroy" do
           it "removes record" do
             model = valid_mongo_model.save!
             model.destroy
@@ -330,9 +364,16 @@ describe Epidote::Model::Mongo do
             model.destroy
             model.saved?.should be_false
           end
+
+          it "changes #dirty?" do
+            model = valid_mongo_model.save!
+            model.dirty?.should be_false
+            model.destroy
+            model.dirty?.should be_true
+          end
         end
 
-        describe "#delete!" do
+        describe "#destroy!" do
           it "removes record" do
             model = valid_mongo_model.save!
             model.destroy!
@@ -345,65 +386,12 @@ describe Epidote::Model::Mongo do
             model.destroy!
             model.saved?.should be_false
           end
-        end
-      end
 
-      describe "with invalid attributes" do
-        describe "#save" do
-          pending "does not raise error" do
-          end
-
-          pending "does not change record" do
-          end
-
-          pending "does not change #saved?" do
-          end
-        end
-
-        describe "#save!" do
-          pending "raises ExistingRecord error" do
-          end
-
-          pending "does not change record" do
-          end
-
-          pending "does not change #saved?" do
-          end
-        end
-
-        describe "#update" do
-          pending "does not raise error" do
-          end
-
-          pending "does not change record" do
-          end
-
-          pending "does not change #saved?" do
-          end
-        end
-
-        describe "#update!" do
-          pending "raises ValidateFailed error" do
-          end
-
-          pending "does not update record" do
-          end
-
-          pending "does not change #saved?" do
-          end
-        end
-
-        describe "#delete" do
-          pending "removes record" do
-          end
-          pending "changes #saved?" do
-          end
-        end
-
-        describe "#delete!" do
-          pending "removes record" do
-          end
-          pending "changes #saved?" do
+          it "changes #dirty?" do
+            model = valid_mongo_model.save!
+            model.dirty?.should be_false
+            model.destroy!
+            model.dirty?.should be_true
           end
         end
       end
@@ -443,56 +431,151 @@ describe Epidote::Model::Mongo do
 
       describe "with valid attributes" do
         describe "#save" do
-          pending "creates new record" do
+          it "creates new record" do
+            model = valid_mongo_model.save
+            MyModel::Mongo.find(model.id).should eq model
           end
 
-          pending "changes #saved?" do
+          it "changes #saved?" do
+            model = valid_mongo_model
+            model.saved?.should be_false
+            model.save
+            model.saved?.should be_true
+          end
+
+          it "changes #dirty?" do
+            model = valid_mongo_model
+            model.dirty?.should be_true
+            model.save
+            model.dirty?.should be_false
           end
         end
 
         describe "#save!" do
-          pending "creates new record" do
+          it "creates new record" do
+            model = valid_mongo_model.save!
+            MyModel::Mongo.find(model.id).should eq model
           end
 
-          pending "changes #saved?" do
+          it "changes #saved?" do
+            model = valid_mongo_model
+            model.saved?.should be_false
+            model.save!
+            model.saved?.should be_true
+          end
+
+          it "changes #dirty?" do
+            model = valid_mongo_model
+            model.dirty?.should be_true
+            model.save!
+            model.dirty?.should be_false
           end
         end
 
         describe "#update" do
-          pending "does not raise error" do
+          it "does not raise error" do
+            valid_mongo_model.update
           end
 
-          pending "does not create record" do
+          it "does not create record" do
+            model = valid_mongo_model.update
+            MyModel::Mongo.find(model.id).should be_nil
           end
 
-          pending "does not change #saved?" do
+          it "does not change #saved?" do
+            model = valid_mongo_model
+            model.saved?.should be_false
+            model.update
+            model.saved?.should be_false
+          end
+
+          it "does not change #dirty?" do
+            model = valid_mongo_model
+            model.dirty?.should be_true
+            model.update
+            model.dirty?.should be_true
           end
         end
 
         describe "#update!" do
-          pending "raises MissingRecord error" do
+          it "raises MissingRecord error" do
+            model = valid_mongo_model
+            expect_raises Epidote::Error::MissingRecord do
+              model.update!
+            end
           end
 
-          pending "does not create record" do
+          it "does not create record" do
+            model = valid_mongo_model
+            expect_raises Epidote::Error::MissingRecord do
+              model.update!
+            end
+            MyModel::Mongo.find(model.id).should be_nil
           end
 
-          pending "does not change #saved?" do
+          it "does not change #saved?" do
+            model = valid_mongo_model
+            model.saved?.should be_false
+            expect_raises Epidote::Error::MissingRecord do
+              model.update!
+            end
+            model.saved?.should be_false
+          end
+
+          it "does not change #dirty?" do
+            model = valid_mongo_model
+            model.dirty?.should be_true
+            expect_raises Epidote::Error::MissingRecord do
+              model.update!
+            end
+            model.dirty?.should be_true
           end
         end
 
-        describe "#delete" do
-          pending "does not raise error" do
+        describe "#destroy" do
+          it "does not raise error" do
+            valid_mongo_model.destroy
           end
 
-          pending "does not change #saved?" do
+          it "does not change #saved?" do
+            model = valid_mongo_model
+            model.saved?.should be_false
+            model.destroy
+            model.saved?.should be_false
+          end
+
+          it "does not change #dirty?" do
+            model = valid_mongo_model
+            model.dirty?.should be_true
+            model.destroy
+            model.dirty?.should be_true
           end
         end
 
-        describe "#delete!" do
-          pending "raises MissingRecord error" do
+        describe "#destroy!" do
+          it "raises MissingRecord error" do
+            model = valid_mongo_model
+            expect_raises Epidote::Error::MissingRecord do
+              model.destroy!
+            end
           end
 
-          pending "does not change #saved?" do
+          it "does not change #saved?" do
+            model = valid_mongo_model
+            model.saved?.should be_false
+            expect_raises Epidote::Error::MissingRecord do
+              model.destroy!
+            end
+            model.saved?.should be_false
+          end
+
+          it "does not change #dirty?" do
+            model = valid_mongo_model
+            model.dirty?.should be_true
+            expect_raises Epidote::Error::MissingRecord do
+              model.destroy!
+            end
+            model.dirty?.should be_true
           end
         end
       end
@@ -567,14 +650,14 @@ describe Epidote::Model::Mongo do
           end
         end
 
-        describe "#delete" do
+        describe "#destroy" do
           pending "does not raise error" do
           end
           pending "does not change #saved?" do
           end
         end
 
-        describe "#delete!" do
+        describe "#destroy!" do
           pending "raises MissingRecord error" do
           end
           pending "does not change #saved?" do

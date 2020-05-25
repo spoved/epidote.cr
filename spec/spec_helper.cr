@@ -15,7 +15,13 @@ Spec.before_suite do
 end
 
 Spec.before_each do
-  MyModel::Mongo.each &.destroy!
+  MyModel::Mongo.all.each do |r|
+    begin
+      r.destroy!
+    rescue ex
+      puts ex.inspect
+    end
+  end
 end
 
 def invalid_mongo_model

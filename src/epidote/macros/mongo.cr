@@ -134,7 +134,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             results = [] of {{@type}}
             with_collection do |coll|
               coll.find(BSON.new) do |doc|
-                results << from_bson(doc)
+                results << from_bson(doc).mark_saved.mark_clean
               end
             end
             results
@@ -143,7 +143,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def self.each(&block : {{@type}} -> _)
             with_collection do |coll|
               coll.find(BSON.new) do |doc|
-                block.call from_bson(doc)
+                block.call from_bson(doc).mark_saved.mark_clean
               end
             end
           end
