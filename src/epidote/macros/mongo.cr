@@ -9,6 +9,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
   end
 
   macro inherited
+    Log = ::Log.for(self)
     INDEXES = Hash(BSON, ::Mongo::IndexOpt).new
   end
 
@@ -35,6 +36,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
         {% begin %}
 
           def self.drop
+            logger.warn { "dropping collection: #{COLLECTION}"}
+
             adapter.with_database do |db|
               if db.has_collection?(COLLECTION)
                 adapter.with_collection(COLLECTION, &.drop)
@@ -43,11 +46,16 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def self.init_collection!(options : BSON? = nil)
+            logger.warn { "initializing collection: #{COLLECTION}"}
+
             adapter.with_database do |db|
               if db.has_collection?(COLLECTION)
                 raise Epidote::Error.new("Collection #{COLLECTION} already exists")
               else
+                logger.verbose { "creating collection: #{COLLECTION}" }
                 db.create_collection(COLLECTION, options)
+
+                logger.verbose { "adding indexes to collection: #{COLLECTION}" }
                 adapter.with_collection(COLLECTION) do |coll|
                   INDEXES.each do |index, opts|
                     coll.create_index(index, opts)
@@ -57,8 +65,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             end
           end
 
-          {% for name, type in ATTR_TYPES %}
-          {% end %}
+          def_equals( {% for name, type in ATTR_TYPES %} @{{name.id}}, {% end %})
 
           def self.with_collection(&block : ::Mongo::Collection -> Nil) : Nil
             adapter.with_collection(COLLECTION, &block)
@@ -89,6 +96,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def self.from_bson(bson : BSON)
+            logger.debug { "raw bson: #{bson}"}
             new_ob = self.allocate
             bson.each_key do |%key|
               %value = bson[%key]
@@ -100,7 +108,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                   new_ob.id =  %value.as(BSON::ObjectId)
                 end
               {% for name, type in ATTR_TYPES %}
-              when {{name.stringify}}
+              when {{name.id.stringify}}
                 new_ob.{{name.id}} = %value.as({{type.id}})
               {% end %}
               else
@@ -111,6 +119,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           private def self._query_all
+            logger.debug { "querying all records"}
+
             results = [] of {{@type}}
             with_collection do |coll|
               coll.find(BSON.new) do |doc|
@@ -120,26 +130,59 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             results
           end
 
+          def self.each(&block : {{@type}} -> _)
+            with_collection do |coll|
+              coll.find(BSON.new) do |doc|
+                block.call from_bson(doc)
+              end
+            end
+          end
+
           def self.query(
             {% for name, type in ATTR_TYPES %}
               {{name.id}} : {{type}}? = nil,
             {% end %}
-          )
+          ) : Array({{@type}})
+
+            %query = Hash(String, ValTypes).new
+
+            {% for name, type in ATTR_TYPES %}
+            %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
+            {% end %}
+
+            results = Array({{@type}}).new
+            with_collection do |col|
+              res = col.find(%query)
+              logger.verbose { "query: #{%query}" }
+              res.each do |r|
+                results << from_bson(r)
+              end
+              # result = from_bson(bson) unless bson.nil?
+            end
+
+            results
+          rescue ex
+            logger.error(exception: ex) { "Error when trying to locate record with id: #{id.to_s}" }
+            Array({{@type}}).new
           end
 
           # Find a single record based on primary key
-          def self.find(id : String | BSON::ObjectId) : {{@type}}?
+          def self.find(id : BSON::ObjectId) : {{@type}}?
             result : {{@type}}? = nil
             with_collection do |col|
-              bson = col.find_one({"_id" => id})
+              bson = col.find_one({"_id" => id.to_s})
+              logger.verbose { "find: id: #{id.to_s} returned: #{bson}" }
               result = from_bson(bson) unless bson.nil?
             end
             result
           rescue ex
             logger.error(exception: ex) { "Error when trying to locate record with id: #{id.to_s}" }
+            nil
           end
 
           def _delete_record
+            logger.debug { "deleting record: #{self.id}"}
+
             self.with_collection do |coll|
               coll.remove({"_id" => id})
               if (err = coll.last_error)
@@ -152,6 +195,9 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def _insert_record
+            self.valid!
+            logger.debug { "inserting record: #{self}"}
+
             self.with_collection do |coll|
               doc = BSON.from_json(self.to_json)
 
@@ -168,8 +214,9 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             end
           end
 
-
           def _update_record
+            self.valid!
+            logger.debug { "updating record: #{self}"}
             {{@type}}.with_collection do |coll|
               coll.update({"_id" => id}, {"$set" => self.attr_hash})
             end
