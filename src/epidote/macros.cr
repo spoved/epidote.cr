@@ -4,7 +4,21 @@ require "json"
 abstract class Epidote::Model
   macro attribute(name, type, **options)
     @[::JSON::Field]
-    setter {{name.id}} : {{type}}? = {% if options[:default] %} {{options[:default]}} {% else %} nil {% end %}
+    @{{name.id}} : {{type}}? = {% if options[:default] %} {{options[:default]}} {% else %} nil {% end %}
+
+    def {{name.id}}=(val : {{type}}?)
+      {% if options[:default] %}
+        if val.nil?
+          @{{name.id}} = {{options[:default]}}
+        else
+          @{{name.id}} = val
+        end
+      {% else %} 
+        @{{name.id}} = val
+      {% end %}
+
+      mark_dirty
+    end
 
     @[::Epidote::DB::Model::Attr(
       name: :{{name.id}},
@@ -163,6 +177,7 @@ abstract class Epidote::Model
             when :{{name.id}}
               if value.is_a?({{anno[:type].id}})
                 self.{{name.id}} = value.as({{anno[:type].id}})
+                mark_dirty
               else
                 raise Epidote::Error.new "Attribute #{name} must be type {{anno[:type].id}} not #{typeof(value)}"
               end

@@ -23,6 +23,26 @@ abstract class Epidote::Model
 
   abstract def adapter : Epidote::Adapter.class
 
+  @[JSON::Field(ignore: true)]
+  protected property saved : Bool = false
+
+  @[JSON::Field(ignore: true)]
+  protected property dirty : Bool = false
+
+  # Indicates if the record has been saved to the database or is a new record
+  def saved?
+    saved
+  end
+
+  # Indicates if the record has been modified and changes have not been saved
+  def dirty?
+    !saved? || dirty
+  end
+
+  protected def mark_dirty
+    self.dirty = true
+  end
+
   # This will save the record to the database but will raise any errors encountered
   # ```
   # model = MyModel.new(name: "one", unique_name: "model1")
@@ -32,6 +52,8 @@ abstract class Epidote::Model
   # ```
   def save!
     self._insert_record
+    self.saved = true
+    self.dirty = false
     self
   end
 
@@ -57,6 +79,8 @@ abstract class Epidote::Model
   # ```
   def destroy! : Nil
     self._delete_record
+    self.saved = false
+    mark_dirty
   end
 
   # This will delete the record but will suppress and log any errors encountered
@@ -82,6 +106,7 @@ abstract class Epidote::Model
   # ```
   def update!
     self._update_record
+    self.dirty = false
     self
   end
 

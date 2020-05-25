@@ -13,3 +13,19 @@ Spec.before_suite do
   MyModel::Mongo.drop
   MyModel::Mongo.init_collection!
 end
+
+Spec.before_each do
+  MyModel::Mongo.each &.destroy!
+end
+
+def invalid_mongo_model
+  model = MyModel::Mongo.new(id: BSON::ObjectId.new, name: "my_name", unique_name: UUID.random.to_s)
+  model.valid?.should be_false
+  model
+end
+
+def valid_mongo_model
+  model = MyModel::Mongo.new(id: BSON::ObjectId.new, name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1)
+  model.valid?.should be_true
+  model
+end

@@ -7,5 +7,9 @@ class Epidote::Error < Exception
     end
   end
 
+  class ExistingRecord < Epidote::Error; end
+
+  class MissingRecord < Epidote::Error; end
+
   class UnknownAttribute < Epidote::Error; end
 end

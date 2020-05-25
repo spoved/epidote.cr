@@ -95,6 +95,16 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             hash
           end
 
+          private def attr_string_hash : Hash(String, ValTypes)
+            hash =  Hash(String, ValTypes).new
+            {{@type}}.attributes.each do |k|
+              next if k == :id || k == :_id
+
+              hash[k.to_s] = get(k)
+            end
+            hash
+          end
+
           def self.from_bson(bson : BSON)
             logger.debug { "raw bson: #{bson}"}
             new_ob = self.allocate
@@ -182,20 +192,22 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def _delete_record
             logger.debug { "deleting record: #{self.id}"}
-
+            res = false
             self.with_collection do |coll|
-              coll.remove({"_id" => id})
+              coll.remove({"_id" => id.to_s})
               if (err = coll.last_error)
-                return err["nRemoved"] == 1 ? true : false
+                res =  err["nRemoved"] == 1 ? true : false
               else
-                return false
+                res =  false
               end
             end
-            false
+            res
           end
 
           def _insert_record
             self.valid!
+            raise Epidote::Error::ExistingRecord.new("record already exists!") if self.saved?
+
             logger.debug { "inserting record: #{self}"}
 
             self.with_collection do |coll|
@@ -216,9 +228,9 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def _update_record
             self.valid!
-            logger.debug { "updating record: #{self}"}
+            logger.debug { "updating record: #{self.id.to_s} with attributes: #{self.attr_string_hash}"}
             {{@type}}.with_collection do |coll|
-              coll.update({"_id" => id}, {"$set" => self.attr_hash})
+              coll.update({"_id" => id.to_s}, {"$set" => self.attr_string_hash})
             end
           end
         {% end %}
