@@ -122,10 +122,19 @@ abstract class Epidote::Model
           alias ValTypes = Nil {% for name, anno in properties %} | {{anno[:type]}} {% end %}
 
           ATTR_TYPES = {
-            {% for name, anno in properties %} {{name.id}} => {{anno[:type]}}, {% end %}
+            {% for name, anno in properties %} :{{name.id}} => {{anno[:type]}}, {% end %}
           }
 
-          ATTR_NAMES = {{ properties.keys.map &.id }}
+          ATTR_NAMES = [
+            {% for name, anno in properties %} :{{name.id}}, {% end %}
+          ]
+
+          {% for name, anno in properties %}
+            {% if name != "id" && anno[:index] %}
+            add_index(keys: [{{name.stringify}}], unique: {{anno[:unique]}}, index_name: {{anno[:index_name]}} )
+
+            {% end %}
+          {% end %}
 
           # Array of all the attributes names
           protected def self.attributes : Array(Symbol)
@@ -160,6 +169,15 @@ abstract class Epidote::Model
             {% end %}
             else
               raise Epidote::Error::UnknownAttribute.new "Unknown attribute #{name}"
+            end
+          end
+
+          def update_attrs(changes : Hash(Symbol, ValTypes))
+            changes.each do |n, v|
+              raise "Unknown attribute" unless {{@type}}.attributes.includes?(n)
+              raise "Can not change primary key" if n == :id
+
+              self.set(n, v)
             end
           end
         {% end %}

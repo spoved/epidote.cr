@@ -28,13 +28,4 @@ abstract class Epidote::Model::Mongo < Epidote::Model
   def id=(value : String)
     self.id = BSON::ObjectId.new value
   end
-
-  def _insert_record
-  end
-
-  def _delete_record
-  end
-
-  def _update_record
-  end
 end

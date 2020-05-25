@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe MyModel::Mongo do
+describe Epidote::Model::Mongo do
   describe "static methods" do
     it "#collection_name" do
       MyModel::Mongo.collection_name.should eq "my_model"
@@ -14,6 +14,19 @@ describe MyModel::Mongo do
       unique_name: "model1"
     )
     model.to_json.should eq %|{"_id":"5ebb05cd1761ee7ef4165742","name":"my_name","unique_name":"model1","default_value":"a string"}|
+  end
+
+  it "#to_hash" do
+    model = MyModel::Mongo.new(
+      id: BSON::ObjectId.new("5ebb05cd1761ee7ef4165742"),
+      name: "my_name",
+      unique_name: "model1",
+      not_nil_value: 5,
+    )
+    hash = model.to_h
+    hash[:id].should eq BSON::ObjectId.new("5ebb05cd1761ee7ef4165742")
+    hash[:name].should eq "my_name"
+    hash[:unique_name].should eq "model1"
   end
 
   describe "can be validated" do
@@ -124,6 +137,13 @@ describe MyModel::Mongo do
   end
 
   describe "with database" do
+    describe "can create" do
+      it "#save" do
+        # model = MyModel::Mongo.new(name: "my_name", unique_name: "model1")
+        # model.save!
+      end
+    end
+
     describe "query" do
       it "#all" do
         MyModel::Mongo.all

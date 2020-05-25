@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe MyModel::MySQL do
+describe Epidote::Model::MySQL do
   describe "static methods" do
     it "#table_name" do
       MyModel::MySQL.table_name.should eq "my_model"

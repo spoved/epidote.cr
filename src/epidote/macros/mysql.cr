@@ -6,6 +6,9 @@ abstract class Epidote::Model::MySQL < Epidote::Model
     end
   end
 
+  macro add_index(keys, unique = false, index_name = nil)
+  end
+
   macro _epidote_methods
     macro finished
       {% verbatim do %}

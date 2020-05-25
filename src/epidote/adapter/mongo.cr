@@ -57,7 +57,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     #   logger.error(exception: ex) { ex.message }
   end
 
-  protected def self.with_collection(collection, &block : ::Mongo::Collection -> Nil) : Nil
+  def self.with_collection(collection, &block : ::Mongo::Collection -> Nil) : Nil
     with_database do |db|
       yield db[collection]
     end
