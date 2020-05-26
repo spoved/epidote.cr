@@ -13,18 +13,18 @@ abstract class Epidote::Model::Mongo < Epidote::Model
     INDEXES = Hash(BSON, ::Mongo::IndexOpt).new
   end
 
-  macro add_index(keys, unique = false, index_name = nil)
+  macro add_index(keys, **options)
     INDEXES[{
       {% for name in keys %}
       {{name.id.stringify}} => 1,
       {% end %}
     }.to_bson] = ::Mongo::IndexOpt.new(
-        {% if index_name %}
-        name: {{index_name.stringify}},
+        {% if options[:index_name] %}
+        name: {{options[:index_name].stringify}},
         {% else %}
         name: "_index_{{keys.join("_").id}}",
         {% end %}
-        {% if unique %}
+        {% if options[:unique] %}
         unique: true,
         {% end %}
       )
@@ -73,36 +73,6 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def with_collection(&block : ::Mongo::Collection -> Nil) : Nil
             {{@type}}.with_collection(&block)
-          end
-
-          alias DataHash = Hash(Symbol, ValTypes)
-
-          def to_h : DataHash
-            hash = DataHash.new
-            {{@type}}.attributes.each do |k|
-              hash[k] = get(k)
-            end
-            hash
-          end
-
-          private def attr_hash : DataHash
-            hash = DataHash.new
-            {{@type}}.attributes.each do |k|
-              next if k == :id || k == :_id
-
-              hash[k] = get(k)
-            end
-            hash
-          end
-
-          private def attr_string_hash : Hash(String, ValTypes)
-            hash =  Hash(String, ValTypes).new
-            {{@type}}.attributes.each do |k|
-              next if k == :id || k == :_id
-
-              hash[k.to_s] = get(k)
-            end
-            hash
           end
 
           def self.from_bson(bson : BSON)

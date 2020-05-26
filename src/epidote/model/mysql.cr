@@ -16,13 +16,4 @@ abstract class Epidote::Model::MySQL < Epidote::Model
   def adapter : Epidote::Adapter::MySQL.class
     Epidote::Model::MySQL.adapter
   end
-
-  def _insert_record
-  end
-
-  def _delete_record
-  end
-
-  def _update_record
-  end
 end

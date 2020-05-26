@@ -21,8 +21,8 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     password: ENV["MONGODB_PASS"]? || ""
   )
 
-  @@client : ::Mongo::Client?
-  @@client_ro : ::Mongo::Client?
+  @@client : ::Mongo::Client? = nil
+  @@client_ro : ::Mongo::Client? = nil
 
   private def self.new_client(uri)
     logger.info { "creating new mongo client" }
@@ -34,7 +34,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
   end
 
   def self.client_ro : ::Mongo::Client
-    @@client_ro ||= MONGODB_URI != MONGODB_RO_URI ? self.new_client(client_ro_uri.to_s) : client
+    @@client_ro ||= client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
   end
 
   # def self.close
@@ -54,7 +54,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
   end
 
   def self.client_ro_uri
-    MONGODB_URI
+    MONGODB_RO_URI
   end
 
   def self.database_name

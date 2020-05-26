@@ -86,9 +86,32 @@ abstract class Epidote::Model
             {% end %}
           {% end %}
 
+          ATTR_PROPERTIES = {
+            {% for name, anno in properties %}
+            :{{name.id}} => {{anno.named_args}}.to_h,
+            {% end %}
+          }
+
           # Check found properties
           {% for name, anno in properties %}
           {% raise "Missing type for attribute #{name}" unless anno[:type] %}
+
+          {% if anno[:primary_key] %}
+          PRIMARY_KEY = {{name.id.stringify}}
+
+          def self.primary_key_name
+            PRIMARY_KEY
+          end
+
+          def primary_key_name
+            PRIMARY_KEY
+          end
+
+          def primary_key_val
+            self.{{name.id}}
+          end
+          {% end %}
+
           {% end %}
 
           def initialize(
@@ -127,17 +150,16 @@ abstract class Epidote::Model
           alias ValTypes = Nil {% for name, anno in properties %} | {{anno[:type]}} {% end %}
 
           ATTR_TYPES = {
-            {% for name, anno in properties %} :{{name.id}} => {{anno[:type]}}, {% end %}
+            {% for name, anno in properties %} :{{ name.id }} => {{anno[:type]}}, {% end %}
           }
 
           ATTR_NAMES = [
-            {% for name, anno in properties %} :{{name.id}}, {% end %}
+            {% for name, anno in properties %} :{{ name.id }}, {% end %}
           ]
 
           {% for name, anno in properties %}
             {% if name != "id" && anno[:index] %}
-            add_index(keys: [{{name.stringify}}], unique: {{anno[:unique]}}, index_name: {{anno[:index_name]}} )
-
+            add_index(keys: [{{name.stringify}}], options: {{anno.named_args}})
             {% end %}
           {% end %}
 
@@ -185,6 +207,43 @@ abstract class Epidote::Model
 
               self.set(n, v)
             end
+          end
+
+          alias DataHash = Hash(Symbol, ValTypes)
+
+          # Alias of each `key => typeof(val)` in a `NamedTuple`
+          alias NamedVars = NamedTuple(
+            {% for name, anno in properties %}
+              {{name.id}}: {{anno[:type].id}},
+            {% end %}
+          )
+
+          def to_h : DataHash
+            hash = DataHash.new
+            {{@type}}.attributes.each do |k|
+              hash[k] = get(k)
+            end
+            hash
+          end
+
+          private def attr_hash : DataHash
+            hash = DataHash.new
+            {{@type}}.attributes.each do |k|
+              next if k == :id || k == :_id
+
+              hash[k] = get(k)
+            end
+            hash
+          end
+
+          private def attr_string_hash : Hash(String, ValTypes)
+            hash =  Hash(String, ValTypes).new
+            {{@type}}.attributes.each do |k|
+              next if k == :id || k == :_id
+
+              hash[k.to_s] = get(k)
+            end
+            hash
           end
         {% end %}
       {% end %}

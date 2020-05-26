@@ -10,7 +10,10 @@ class MyModel::Mongo < Epidote::Model::Mongo
   attribute :default_value, String, default: "a string"
   attribute :not_nil_value, Int32, not_nil: true
 
-  add_index [id, unique_name], unique: true
+  # attribute :uuid, UUID
+  # attribute :extra_data, JSON::Any
+
+  add_index [:id, :unique_name], unique: true
 end
 
 class MyModel::MySQL < Epidote::Model::MySQL
@@ -29,4 +32,8 @@ class MyModel::MySQL < Epidote::Model::MySQL
     })
   attribute :default_value, String, default: "a string"
   attribute :not_nil_value, Int32, not_nil: true
+  attribute :uuid, UUID
+  attribute :extra_data, JSON::Any
+
+  add_index [:id, :unique_name], unique: true
 end
