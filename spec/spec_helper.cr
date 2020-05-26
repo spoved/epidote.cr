@@ -13,8 +13,6 @@ Spec.before_suite do
   begin
     MyModel::Mongo.drop
     MyModel::Mongo.init_collection!
-
-    MyModel::MySQL.truncate
   rescue ex
     Log.error(exception: ex) { ex.message }
     Log.error(exception: ex) { ex.backtrace }
@@ -23,9 +21,7 @@ end
 
 Spec.before_each do
   begin
-    MyModel::Mongo.all.each do |r|
-      r.destroy!
-    end
+    MyModel::Mongo.each &.destroy
     MyModel::MySQL.truncate
   rescue ex
     Log.error(exception: ex) { ex.message }
