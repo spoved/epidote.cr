@@ -22,6 +22,8 @@ abstract class Epidote::Model
   abstract def valid! : Bool
 
   abstract def adapter : Epidote::Adapter.class
+  abstract def primary_key_name
+  abstract def primary_key_val
 
   @[JSON::Field(ignore: true)]
   protected property saved : Bool = false
@@ -62,6 +64,10 @@ abstract class Epidote::Model
   # dupe_model.save! # Raises error
   # ```
   def save!
+    self.valid!
+    raise Epidote::Error::ExistingRecord.new("record already exists!") if self.saved?
+    logger.debug { "inserting record: #{self}" }
+
     self._insert_record
     self.saved = true
     self.dirty = false
@@ -91,6 +97,7 @@ abstract class Epidote::Model
   # ```
   def destroy! : Nil
     raise Epidote::Error::MissingRecord.new unless saved?
+    logger.debug { "deleting record: #{self.primary_key_val.to_s}" }
 
     self._delete_record
     self.saved = false
@@ -120,6 +127,8 @@ abstract class Epidote::Model
   # ```
   def update!
     raise Epidote::Error::MissingRecord.new unless saved?
+    self.valid!
+    logger.debug { "updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
 
     self._update_record
     self.dirty = false

@@ -161,7 +161,6 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def _delete_record
-            logger.debug { "deleting record: #{self.id}"}
             res = false
             self.with_collection do |coll|
               coll.remove({"_id" => id.to_s})
@@ -175,11 +174,6 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def _insert_record
-            self.valid!
-            raise Epidote::Error::ExistingRecord.new("record already exists!") if self.saved?
-
-            logger.debug { "inserting record: #{self}"}
-
             self.with_collection do |coll|
               doc = BSON.from_json(self.to_json)
 
@@ -197,9 +191,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def _update_record
-            self.valid!
-            logger.debug { "updating record: #{self.id.to_s} with attributes: #{self.attr_string_hash}"}
-            {{@type}}.with_collection do |coll|
+           {{@type}}.with_collection do |coll|
               coll.update({"_id" => id.to_s}, {"$set" => self.attr_string_hash})
             end
           end

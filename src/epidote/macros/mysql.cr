@@ -49,7 +49,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           RES_STRUCTURE = {
             {% for name, val in ATTR_TYPES %}
               {% if val.id == "UUID" || val.id == "JSON::Any" %}
-                {{name.id}}: String,
+                {{name.id}}: String?,
               {% else %}
                 {{name.id}}: {{val.id}},
               {% end %}
@@ -70,7 +70,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           alias RespTuple = NamedTuple(
             {% for name, val in ATTR_TYPES %}
               {% if val.id == "UUID" || val.id == "JSON::Any" %}
-                {{name.id}}: String,
+                {{name.id}}: String?,
               {% else %}
                 {{name.id}}: {{val.id}},
               {% end %}
@@ -82,9 +82,9 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             {{@type}}.new(
               {% for name, val in ATTR_TYPES %}
                 {% if val.id == "UUID" %}
-                  {{name.id}}: UUID.new(res[:{{name.id}}].as(String)),
+                  {{name.id}}: res[:{{name.id}}].nil? ? nil : UUID.new(res[:{{name.id}}].as(String)),
                 {% elsif val.id == "JSON::Any" %}
-                  {{name.id}}: JSON.parse(res[:{{name.id}}].as(String)),
+                  {{name.id}}: res[:{{name.id}}].nil? ? nil : JSON.parse(res[:{{name.id}}].as(String)),
                 {% else %}
                   {{name.id}}: res[:{{name.id}}],
                 {% end %}
@@ -95,12 +95,14 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           private def self._query_all(where = "")
             logger.debug { "querying all records"}
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
+            logger.debug { "_query_all: #{sql}"}
             adapter.client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
           end
 
 
           def self.each(where = "", &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
+            logger.debug { "each: #{sql}"}
             adapter.client_ro.query_all(sql, as: RES_STRUCTURE).map do |r|
               block.call self.from_named_truple(r).mark_saved.mark_clean
             end
@@ -109,8 +111,11 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           def self.find(id)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
             "WHERE `#{{{@type}}.primary_key_name}` = ?"
-            resp = adapter.client_ro.query_one(sql, as: RES_STRUCTURE)
+            logger.debug { "find: #{sql}; id: #{id}"}
+            resp = adapter.client_ro.query_one(sql, id, as: RES_STRUCTURE)
             self.from_named_truple(resp).mark_saved.mark_clean
+          rescue ex : DB::NoResultsError
+            nil
           end
 
           def self.query(
@@ -126,7 +131,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               io << "WHERE "
               {% for name, val in ATTR_TYPES %}
                 unless {{name.id}}.nil?
-                  io << "`{{name}}` = "
+                  io << "`{{name.id}}` = "
                 {% if val.id == "UUID" %}
                   io << "'" << {{name.id}}.to_s << "'"
                 {% elsif val.id == "JSON::Any" %}
@@ -148,20 +153,23 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
                 "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-            logger.debug { sql }
-            adapter.client.exec(sql, self.primary_key_val)
+                logger.debug { "_delete_record: #{sql}"}
+                adapter.client.exec(sql, self.primary_key_val)
           end
 
           def _insert_record
             %cols = {{@type}}.attributes.map {|x| "`#{x}` = ?"}
 
             sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
-            logger.debug { sql }
-            adapter.client.exec(sql,
-              {% for key in ATTR_TYPES.keys %}
-              self.{{key.id}},
-              {% end %}
-            )
+            logger.debug { "_insert_record: #{sql}"}
+            resp = adapter.client.exec(sql,
+                {% for key in ATTR_TYPES.keys %}
+                self.{{key.id}},
+                {% end %}
+              )
+            if resp.rows_affected > 0 && primary_key_val.nil? && resp.last_insert_id > 0
+              self.set({{@type}}.primary_key_name, resp.last_insert_id.to_i32)
+            end
           end
 
           def _update_record
@@ -170,8 +178,8 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-            logger.debug { sql }
-            adapter.client.exec(sql,
+              logger.debug { "_update_record: #{sql}"}
+              adapter.client.exec(sql,
               {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
               self.{{key.id}},
               {% end %}

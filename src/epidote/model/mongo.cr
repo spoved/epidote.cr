@@ -9,10 +9,12 @@ require "../macros/mongo"
 
 abstract class Epidote::Model::Mongo < Epidote::Model
   @[::JSON::Field(key: "_id")]
-  @[::Epidote::DB::Model::Attr(name: :id, type: BSON::ObjectId, unique: true, index: true)]
+  # @[::Epidote::DB::Model::Attr(name: :id, type: BSON::ObjectId,
+  #   unique: true, index: true, primary_key: true)]
   setter id : BSON::ObjectId = BSON::ObjectId.new
 
-  @[::Epidote::DB::Model::Attr(name: :id, type: BSON::ObjectId, default: BSON::ObjectId.new, unique: true, index: true)]
+  @[::Epidote::DB::Model::Attr(name: :id, type: BSON::ObjectId, default: BSON::ObjectId.new,
+    unique: true, index: true, primary_key: true)]
   def id : BSON::ObjectId
     @id
   end

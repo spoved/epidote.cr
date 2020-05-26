@@ -80,8 +80,6 @@ describe Epidote::Model::MySQL do
       model.name.should eq "my_name"
       model.unique_name.should eq "model1"
       model.default_value.should eq "a string"
-      model.id.should_not be_nil
-      model.id.should be_a Int32
     end
 
     it "can be changed" do
@@ -157,8 +155,6 @@ describe Epidote::Model::MySQL do
         model.get(:name).should eq "my_name"
         model.get(:unique_name).should eq "model1"
         model.get(:default_value).should eq "a string"
-        model.get(:id).should_not be_nil
-        model.get(:id).should be_a BSON::ObjectId
       end
 
       it "raises error on missing attribute" do

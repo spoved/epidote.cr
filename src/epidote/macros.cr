@@ -184,10 +184,10 @@ abstract class Epidote::Model
             end
           end
 
-          def set(name : Symbol, value : ValTypes)
+          def set(name : Symbol | String, value : ValTypes)
             case name
             {% for name, anno in properties %}
-            when :{{name.id}}
+            when :{{name.id}}, {{name.id.stringify}}
               if value.is_a?({{anno[:type].id}})
                 self.{{name.id}} = value.as({{anno[:type].id}})
                 mark_dirty
