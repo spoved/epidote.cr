@@ -27,9 +27,9 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - sudo apt-get -y install libmongoc-dev libbson-dev
-  
+
 # Uncomment the following if you'd like Travis to run specs and check code formatting
 script:
 - docker-compose up --detach
-- crystal spec
+- crystal spec -v
 - crystal tool format --check

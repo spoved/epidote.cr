@@ -4,7 +4,7 @@ Dotenv.load if File.exists?(".env")
 require "spec"
 require "../src/epidote"
 
-# spoved_logger(bind: true)
+spoved_logger(bind: true, level: :error)
 # ::Mongo.logger.level = :debug
 
 require "./fixtures"
@@ -22,16 +22,15 @@ Spec.before_suite do
 end
 
 Spec.before_each do
-  MyModel::Mongo.all.each do |r|
-    begin
+  begin
+    MyModel::Mongo.all.each do |r|
       r.destroy!
-    rescue ex
-      Log.error(exception: ex) { ex.message }
-      Log.error(exception: ex) { ex.backtrace }
     end
+    MyModel::MySQL.truncate
+  rescue ex
+    Log.error(exception: ex) { ex.message }
+    Log.error(exception: ex) { ex.backtrace }
   end
-
-  MyModel::MySQL.truncate
 end
 
 def invalid_mongo_model

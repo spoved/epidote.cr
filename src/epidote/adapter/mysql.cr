@@ -73,4 +73,4 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   end
 end
 
-at_exit { Epidote::Adapter::MySQL.close }
+# at_exit { Epidote::Adapter::MySQL.close }
