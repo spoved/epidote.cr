@@ -21,13 +21,13 @@ env:
     - MYSQL_PASS=mysql
     - MYSQL_DB_NAME=epidote_test
 
-
 before_install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-    
+  - sudo apt-get -y install libmongoc-dev libbson-dev
+  
 # Uncomment the following if you'd like Travis to run specs and check code formatting
 script:
 - docker-compose up --detach
