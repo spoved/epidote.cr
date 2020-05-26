@@ -69,8 +69,8 @@ abstract class Epidote::Model
     logger.debug { "inserting record: #{self}" }
 
     self._insert_record
-    self.saved = true
-    self.dirty = false
+    self.mark_saved
+    self.mark_clean
     self
   end
 
@@ -131,7 +131,7 @@ abstract class Epidote::Model
     logger.debug { "updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
 
     self._update_record
-    self.dirty = false
+    self.mark_clean
     self
   end
 
