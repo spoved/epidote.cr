@@ -3,8 +3,31 @@ services:
   - docker
 
 env:
-- MONGODB_HOST=127.0.0.1 MONGODB_PORT=27017 MONGODB_USER=root MONGODB_PASS=example MONGODB_DB_NAME=epidote_test POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=postgres POSTGRES_PASS=postgres POSTGRES_DB_NAME=epidote_test MYSQL_HOST=localhost MYSQL_PORT=3306 MYSQL_USER=root MYSQL_PASS=mysql MYSQL_DB_NAME=epidote_test
+  global:
+    - DOCKER_COMPOSE_VERSION=1.25.5
+    - MONGODB_HOST=127.0.0.1
+    - MONGODB_PORT=27017
+    - MONGODB_USER=root
+    - MONGODB_PASS=example
+    - MONGODB_DB_NAME=epidote_test
+    - POSTGRES_HOST=localhost
+    - POSTGRES_PORT=5432
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASS=postgres
+    - POSTGRES_DB_NAME=epidote_test
+    - MYSQL_HOST=localhost
+    - MYSQL_PORT=3306
+    - MYSQL_USER=root
+    - MYSQL_PASS=mysql
+    - MYSQL_DB_NAME=epidote_test
 
+
+before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+    
 # Uncomment the following if you'd like Travis to run specs and check code formatting
 script:
 - docker-compose up --detach
