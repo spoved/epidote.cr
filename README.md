@@ -1,5 +1,6 @@
 # epidote
 
+[![Build Status](https://travis-ci.com/spoved/epidote.cr.svg?branch=master)](https://travis-ci.com/spoved/epidote.cr)
 Epidote is yet another ORM for crystal.
 
 ## Goals
