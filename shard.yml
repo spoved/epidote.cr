@@ -14,7 +14,8 @@ dependencies:
     version: ">= 0.2.1"
   mongo:
     github: kalinon/mongo.cr
-    branch: master
+    # branch: master
+    version: ~> 0.3.0
   mysql:
     github: crystal-lang/crystal-mysql
 development_dependencies:

@@ -4,7 +4,7 @@ Dotenv.load if File.exists?(".env")
 require "spec"
 require "../src/epidote"
 
-spoved_logger(bind: true, level: :error)
+# spoved_logger(bind: true, level: :error)
 # ::Mongo.logger.level = :debug
 
 require "./fixtures"
