@@ -54,8 +54,7 @@ services:
     depends_on:
       - mongo
       - mysql
-    command: 
-      - crystal
-      - spec
-      - -v
-      - -Duse_mongo_static
+    command:
+      - /bin/sh
+      - -c
+      - "shards && crystal spec -v -Duse_mongo_static"
