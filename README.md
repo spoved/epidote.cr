@@ -1,9 +1,10 @@
 # epidote
 
 [![Build Status](https://travis-ci.com/spoved/epidote.cr.svg?branch=master)](https://travis-ci.com/spoved/epidote.cr)
+
 Epidote is yet another ORM for crystal.
 
-## Goals
+## Goals of Epidote
 
 There are a couple differences from most other ORMs but the main goals are the following:
 
@@ -13,14 +14,14 @@ There are a couple differences from most other ORMs but the main goals are the f
   * Define all attributes, indexes, and options via macros
   * All model methods should be generated off the information provided in definition
 
-## Databases
+## Database Support
 
 Currently the following databases are supported:
 
 * Mongo 4
 * MySQL 8
 
-## Features
+### Features
 
 The following model actions are currently supported on all models:
 
@@ -34,7 +35,7 @@ The following model actions are currently supported on all models:
 | all    | `.all`     | yes    | Will return an array of all records                   |
 | each   | `.each`    | yes    | Will yield each record to block                       |
 
-## Missing Features / Future Enhancements
+### TODO: Missing Features / Future Enhancements
 
 The following are possible additions that may come over time but are missing now.
 
