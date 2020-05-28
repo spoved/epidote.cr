@@ -16,6 +16,15 @@ class MyModel::Mongo < Epidote::Model::Mongo
   add_index [:id, :unique_name], unique: true
 end
 
+class MyOtherModel::Mongo < Epidote::Model::Mongo
+  collection(:my_other_model)
+
+  attribute :metadata, Hash(String, String)
+  attribute :labels, Array(String)
+  attribute :uuid, UUID
+  attribute :extra_data, JSON::Any
+end
+
 class MyModel::MySQL < Epidote::Model::MySQL
   table(:my_model)
   attributes(

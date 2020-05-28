@@ -87,9 +87,14 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                 else
                   new_ob.id =  %value.as(BSON::ObjectId)
                 end
-              {% for name, type in ATTR_TYPES %}
+              {% for name, typ in ATTR_TYPES %}
               when {{name.id.stringify}}
-                new_ob.{{name.id}} = %value.as({{type.id}})
+                  {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
+                  new_ob.{{name.id}} = {{typ.id}}.from_bson %value
+                  {% else %}
+                  new_ob.{{name.id}} = %value.as({{typ.id}})
+                  {% end %}
+
               {% end %}
               else
                 raise "Unable to set #{%key} with #{%value.inspect}"

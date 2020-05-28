@@ -1,5 +1,25 @@
 require "../../spec_helper"
 require "uuid"
+
+Spec.before_suite do
+  begin
+    MyModel::Mongo.drop
+    MyModel::Mongo.init_collection!
+  rescue ex
+    Log.error(exception: ex) { ex.message }
+    Log.error(exception: ex) { ex.backtrace }
+  end
+end
+
+Spec.before_each do
+  begin
+    MyModel::Mongo.each &.destroy
+  rescue ex
+    Log.error(exception: ex) { ex.message }
+    Log.error(exception: ex) { ex.backtrace }
+  end
+end
+
 describe Epidote::Model::Mongo do
   describe "static methods" do
     it "#collection_name" do

@@ -1,5 +1,15 @@
 require "../../spec_helper"
 require "uuid"
+
+Spec.before_each do
+  begin
+    MyModel::MySQL.truncate
+  rescue ex
+    Log.error(exception: ex) { ex.message }
+    Log.error(exception: ex) { ex.backtrace }
+  end
+end
+
 describe Epidote::Model::MySQL do
   describe "static methods" do
     it "#collection_name" do

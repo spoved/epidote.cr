@@ -9,26 +9,6 @@ require "../src/epidote"
 
 require "./fixtures"
 
-Spec.before_suite do
-  begin
-    MyModel::Mongo.drop
-    MyModel::Mongo.init_collection!
-  rescue ex
-    Log.error(exception: ex) { ex.message }
-    Log.error(exception: ex) { ex.backtrace }
-  end
-end
-
-Spec.before_each do
-  begin
-    MyModel::Mongo.each &.destroy
-    MyModel::MySQL.truncate
-  rescue ex
-    Log.error(exception: ex) { ex.message }
-    Log.error(exception: ex) { ex.backtrace }
-  end
-end
-
 def invalid_mongo_model
   model = MyModel::Mongo.new(id: BSON::ObjectId.new, name: "my_name", unique_name: UUID.random.to_s)
   model.valid?.should be_false
