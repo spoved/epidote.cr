@@ -404,6 +404,12 @@ describe Epidote::Model::MySQL do
     end
 
     describe "without pre-existing record" do
+      describe "#first" do
+        it "returns nil" do
+          MyModel::MySQL.first.should be_nil
+        end
+      end
+
       it "#saved?" do
         valid_mysql_model.saved?.should be_false
       end
@@ -761,6 +767,17 @@ describe Epidote::Model::MySQL do
     end
 
     describe "with multiple pre-existing records" do
+      describe "#first" do
+        it "returns first record" do
+          items = Array(MyModel::MySQL).new
+          5.times do
+            items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: 12).save!
+          end
+
+          MyModel::MySQL.first.should eq items.first
+        end
+      end
+
       describe "#query" do
         it "with matching attributes" do
           items = Array(MyModel::MySQL).new

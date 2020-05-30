@@ -64,12 +64,16 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   end
 
   def self.init_database
-    client.exec("create schema `#{database_name}` if not exists")
+    tmp_uri = client_uri.dup
+    tmp_uri.path = ""
+    tmp_client = new_client(tmp_uri.to_s)
+    tmp_client.exec("create schema if not exists `#{database_name}`")
+    tmp_client.close
   end
 
   def self.drop_database
     logger.warn { "dropping schema #{database_name}" }
-    client.exec("drop schema `#{database_name}` if exists")
+    client.exec("drop schema if exists `#{database_name}`")
   end
 end
 

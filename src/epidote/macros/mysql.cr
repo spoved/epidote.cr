@@ -110,7 +110,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           def self.find(id)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
-            "WHERE `#{{{@type}}.primary_key_name}` = ?"
+              "WHERE `#{{{@type}}.primary_key_name}` = ?"
             logger.debug { "find: #{sql}; id: #{id}"}
             resp = adapter.client_ro.query_one(sql, id, as: RES_STRUCTURE)
             self.from_named_truple(resp).mark_saved.mark_clean

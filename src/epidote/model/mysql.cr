@@ -16,4 +16,8 @@ abstract class Epidote::Model::MySQL < Epidote::Model
   def adapter : Epidote::Adapter::MySQL.class
     Epidote::Model::MySQL.adapter
   end
+
+  def self.first
+    _query_all("LIMIT 1")[0]?
+  end
 end
