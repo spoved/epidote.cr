@@ -56,6 +56,10 @@ abstract class Epidote::Model
     self
   end
 
+  protected def _pre_commit_hook; end
+
+  protected def _post_commit_hook; end
+
   # This will save the record to the database but will raise any errors encountered
   # ```
   # model = MyModel.new(name: "one", unique_name: "model1")
@@ -64,13 +68,17 @@ abstract class Epidote::Model
   # dupe_model.save! # Raises error
   # ```
   def save!
+    self._pre_commit_hook
+
     self.valid!
     raise Epidote::Error::ExistingRecord.new("record already exists!") if self.saved?
-    logger.debug { "inserting record: #{self}" }
 
+    logger.debug { "inserting record: #{self}" }
     self._insert_record
     self.mark_saved
     self.mark_clean
+
+    self._post_commit_hook
     self
   end
 
@@ -126,12 +134,16 @@ abstract class Epidote::Model
   # model.update! # Will raise an error
   # ```
   def update!
+    self._pre_commit_hook
+
     raise Epidote::Error::MissingRecord.new unless saved?
     self.valid!
     logger.debug { "updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
 
     self._update_record
     self.mark_clean
+    self._post_commit_hook
+
     self
   end
 

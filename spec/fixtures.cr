@@ -23,6 +23,30 @@ class MyOtherModel::Mongo < Epidote::Model::Mongo
   attribute :labels, Array(String)
   attribute :uuid, UUID
   attribute :extra_data, JSON::Any
+
+  @[BSON::Prop(ignore: true)]
+  @[JSON::Field(ignore: true)]
+  @pre_commit_calls = 0
+
+  def pre_commit_calls
+    @pre_commit_calls
+  end
+
+  pre_commit ->{
+    @pre_commit_calls += 1
+  }
+
+  @[BSON::Prop(ignore: true)]
+  @[JSON::Field(ignore: true)]
+  @post_commit_calls = 0
+
+  def post_commit_calls
+    @post_commit_calls
+  end
+
+  post_commit ->{
+    @post_commit_calls += 1
+  }
 end
 
 class MyModel::MySQL < Epidote::Model::MySQL

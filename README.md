@@ -141,6 +141,45 @@ class MyModel::MySQL < Epidote::Model::MySQL
 end
 ```
 
+### Hooks
+
+There are two available hooks for before and after a record is saved. They are `pre_commit` and `post_commit`. The pre commit hook will be called before every `save` or `update` and post commit hook will be called after. Here is an example that will set the modified time of the record every time it is saved or updated:
+
+```crystal
+class MyModel::MySQL < Epidote::Model::MySQL
+  table(:my_model)
+  attributes(
+    id: {
+      primary_key:    true,
+      type:           Int32,
+      auto_increment: true,
+    },
+        created_at: {
+      type:    Time,
+      default: Time.utc,
+    },
+    modified_at: Time
+  )
+
+  pre_commit ->{ self.modified_at = Time.utc }
+
+  post_commit ->{
+    # do something after save
+  }
+end
+```
+
+### Other instance variables
+
+If you want to have other instance variables that are not saved to the record, you must add the following annotations to them so `BSON` and `JSON` serialization ignores them:
+
+```crystal
+  @[BSON::Prop(ignore: true)]
+  @[JSON::Field(ignore: true)]
+  @dont_save_this_var = 100
+```
+
+
 ## Development
 
 Testing can be done via `docker-compose` and a `.env` file. The default `.env` values for the specs are defined above. The example MySQL database and table will be created automatically by the docker container, but for manual tests you will need to load [](spec/mysql/mysql.sql) before running specs.

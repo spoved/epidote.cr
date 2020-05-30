@@ -59,6 +59,23 @@ abstract class Epidote::Model
       define_static_methods
       initializers
       {{@type.id}}._epidote_methods
+      {{@type.id}}._commit_hooks
+    {% end %}
+  end
+
+  macro _commit_hooks
+    {% verbatim do %}
+      macro pre_commit(meth)
+        protected def _pre_commit_hook
+          {{meth.body}}
+        end
+      end
+
+      macro post_commit(meth)
+        protected def _post_commit_hook
+          {{meth.body}}
+        end
+      end
     {% end %}
   end
 
@@ -248,6 +265,5 @@ abstract class Epidote::Model
         {% end %}
       {% end %}
     end
-
   end
 end
