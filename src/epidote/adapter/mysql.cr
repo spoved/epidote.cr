@@ -64,6 +64,8 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   end
 
   def self.init_database
+    logger.info { "Creating MySQL database: #{database_name}" }
+
     tmp_uri = client_uri.dup
     tmp_uri.path = ""
     tmp_client = new_client(tmp_uri.to_s)
