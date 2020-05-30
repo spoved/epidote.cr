@@ -23,4 +23,14 @@ abstract class Epidote::Model::MySQL < Epidote::Model
     logger.error { ex }
     nil
   end
+
+  def self.drop
+    logger.warn { "dropping table: #{table_name}" }
+    adapter.client.exec("DROP TABLE `#{table_name}`")
+  end
+
+  def self.truncate
+    logger.warn { "truncating table: #{table_name}" }
+    adapter.client.exec("TRUNCATE TABLE `#{table_name}`")
+  end
 end

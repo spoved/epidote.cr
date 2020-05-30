@@ -34,16 +34,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
       {% verbatim do %}
         {% begin %}
 
-          def self.drop
-            logger.warn { "dropping table: #{table_name}" }
-            adapter.client.exec("DROP TABLE `#{table_name}`")
-          end
-
-          def self.truncate
-            logger.warn { "dropping table: #{table_name}" }
-            adapter.client.exec("TRUNCATE TABLE `#{table_name}`")
-          end
-
           def_equals( {% for name, type in ATTR_TYPES %} @{{name.id}}, {% end %})
 
           RES_STRUCTURE = {
