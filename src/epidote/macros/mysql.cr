@@ -86,14 +86,20 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             logger.debug { "querying all records"}
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
             logger.debug { "_query_all: #{sql}"}
-            adapter.client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
+
+            results : Array({{@type}}) = Array({{@type}}).new
+            adapter.with_ro_database do |client_ro|
+              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
+            end
+            results
           end
 
 
           def self.each(where = "", &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
             logger.debug { "each: #{sql}"}
-            adapter.client_ro.query_all(sql, as: RES_STRUCTURE).map do |r|
+
+            adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|
               block.call self.from_named_truple(r).mark_saved.mark_clean
             end
           end
@@ -102,8 +108,12 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
             logger.debug { "find: #{sql}; id: #{id}"}
-            resp = adapter.client_ro.query_one(sql, id, as: RES_STRUCTURE)
-            self.from_named_truple(resp).mark_saved.mark_clean
+            item : {{@type}}? = nil
+            adapter.with_ro_database do |client_ro|
+              resp = client_ro.query_one(sql, id, as: RES_STRUCTURE)
+              item = self.from_named_truple(resp).mark_saved.mark_clean
+            end
+            item
           rescue ex : DB::NoResultsError
             nil
           end
@@ -140,11 +150,13 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           def _delete_record
-              sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
-                "WHERE `#{{{@type}}.primary_key_name}` = ?"
+            sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
+              "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-                logger.debug { "_delete_record: #{sql}"}
-                adapter.client.exec(sql, self.primary_key_val)
+            logger.debug { "_delete_record: #{sql}"}
+            adapter.with_rw_database do |conn|
+              conn.exec(sql, self.primary_key_val)
+            end
           end
 
           def _insert_record
@@ -152,13 +164,18 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
             sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
             logger.debug { "_insert_record: #{sql}"}
-            resp = adapter.client.exec(sql,
+
+            resp : DB::ExecResult? = nil
+            adapter.with_rw_database do |conn|
+              resp = conn.exec(sql,
                 {% for key in ATTR_TYPES.keys %}
                 self.{{key.id}},
                 {% end %}
               )
-            if resp.rows_affected > 0 && primary_key_val.nil? && resp.last_insert_id > 0
-              self.set({{@type}}.primary_key_name, resp.last_insert_id.to_i32)
+            end
+
+            if resp.not_nil!.rows_affected > 0 && primary_key_val.nil? && resp.not_nil!.last_insert_id > 0
+              self.set({{@type}}.primary_key_name, resp.not_nil!.last_insert_id.to_i32)
             end
           end
 
@@ -168,13 +185,15 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-              logger.debug { "_update_record: #{sql}"}
-              adapter.client.exec(sql,
-              {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
-              self.{{key.id}},
-              {% end %}
-              self.primary_key_val
-            )
+            logger.debug { "_update_record: #{sql}"}
+            adapter.with_rw_database do |conn|
+              conn.exec(sql,
+                {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
+                self.{{key.id}},
+                {% end %}
+                self.primary_key_val
+              )
+            end
           end
         {% end %}
       {% end %}

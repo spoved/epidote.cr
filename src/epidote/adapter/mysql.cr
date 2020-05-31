@@ -34,11 +34,11 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     ::DB.open uri
   end
 
-  def self.client : ::DB::Database
+  protected def self.client : ::DB::Database
     @@client ||= self.new_client(client_uri.to_s)
   end
 
-  def self.client_ro : ::DB::Database
+  protected def self.client_ro : ::DB::Database
     @@client_ro ||= client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
   end
 
@@ -75,6 +75,14 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   def self.drop_database
     logger.warn { "dropping schema #{database_name}" }
     client.exec("drop schema if exists `#{database_name}`")
+  end
+
+  def self.with_rw_database(&block : ::DB::Connection -> Nil)
+    client.using_connection(&block)
+  end
+
+  def self.with_ro_database(&block : ::DB::Connection -> Nil)
+    client_ro.using_connection(&block)
   end
 end
 
