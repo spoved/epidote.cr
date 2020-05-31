@@ -31,6 +31,10 @@ abstract class Epidote::Model
   @[JSON::Field(ignore: true)]
   protected property dirty : Bool = false
 
+  def self.query_one(**args)
+    self.query(**args)[0]?
+  end
+
   # Indicates if the record has been saved to the database or is a new record
   def saved?
     saved

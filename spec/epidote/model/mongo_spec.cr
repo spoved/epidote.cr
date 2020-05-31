@@ -775,6 +775,18 @@ describe Epidote::Model::Mongo do
     end
 
     describe "with multiple pre-existing records" do
+      describe "#query_one" do
+        it "with matching attributes" do
+          items = Array(MyModel::Mongo).new
+          5.times do
+            items << MyModel::Mongo.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: 12).save!
+          end
+
+          result = MyModel::Mongo.query_one(not_nil_value: 12)
+          result.should_not be_nil
+        end
+      end
+
       describe "#query" do
         it "with matching attributes" do
           items = Array(MyModel::Mongo).new
