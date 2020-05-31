@@ -180,7 +180,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           def _update_record
-            %cols = {{@type}}.non_id_attributes.map {|x| "`#{x}` = ?"}
+            %cols = {{@type}}.non_id_attributes.map { |x| "`#{x}` = ?" }
 
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"

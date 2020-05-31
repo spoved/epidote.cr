@@ -115,13 +115,22 @@ abstract class Epidote::Model
 
           {% if anno[:primary_key] %}
           PRIMARY_KEY = {{name.id.stringify}}
+          PRIMARY_TYPE = {{ anno[:type] }}
 
           def self.primary_key_name
             PRIMARY_KEY
           end
 
+          def self.primary_key_type
+            PRIMARY_TYPE
+          end
+
           def primary_key_name
             PRIMARY_KEY
+          end
+
+          def primary_key_type
+            PRIMARY_TYPE
           end
 
           def primary_key_val
