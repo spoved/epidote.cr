@@ -87,7 +87,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
             results : Array({{@type}}) = Array({{@type}}).new
             adapter.with_ro_database do |client_ro|
-              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.new(**r).mark_saved.mark_clean }
+              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
             end
             results
           end
@@ -172,9 +172,13 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               )
             end
 
-            {% if PRIMARY_TYPE == Int32 %}
+            {% if PRIMARY_TYPE.id == "Int32" %}
             if resp.not_nil!.rows_affected > 0 && primary_key_val.nil? && resp.not_nil!.last_insert_id > 0
               self.set({{@type}}.primary_key_name, resp.not_nil!.last_insert_id.to_i32)
+            end
+            {% elsif PRIMARY_TYPE.id == "Int64" %}
+            if resp.not_nil!.rows_affected > 0 && primary_key_val.nil? && resp.not_nil!.last_insert_id > 0
+              self.set({{@type}}.primary_key_name, resp.not_nil!.last_insert_id)
             end
             {% end %}
           end

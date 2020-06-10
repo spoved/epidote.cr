@@ -65,7 +65,7 @@ class MyModel::MySQL < Epidote::Model::MySQL
     })
   attribute :default_value, String, default: "a string"
   attribute :not_nil_value, Int32, not_nil: true
-  attribute :uuid, UUID
+  attribute :uuid, UUID?
   attribute :extra_data, JSON::Any
 
   add_index [:id, :unique_name], unique: true
