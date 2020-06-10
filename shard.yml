@@ -17,7 +17,9 @@ dependencies:
     # branch: master
     version: ~> 0.3.0
   mysql:
-    github: crystal-lang/crystal-mysql
+    # github: crystal-lang/crystal-mysql
+    github: kalinon/crystal-mysql
+    branch: add-uuid-support
 development_dependencies:
   ameba:
     github: veelenga/ameba

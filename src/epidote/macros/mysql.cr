@@ -38,7 +38,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           RES_STRUCTURE = {
             {% for name, val in ATTR_TYPES %}
-              {% if val.id == "UUID" || val.id == "JSON::Any" %}
+              {% if val.id == "JSON::Any" %}
                 {{name.id}}: String?,
               {% else %}
                 {{name.id}}: {{val.id}},
@@ -59,7 +59,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           # Alias of each `key => typeof(val)` in a `NamedTuple`
           alias RespTuple = NamedTuple(
             {% for name, val in ATTR_TYPES %}
-              {% if val.id == "UUID" || val.id == "JSON::Any" %}
+              {% if val.id == "JSON::Any" %}
                 {{name.id}}: String?,
               {% else %}
                 {{name.id}}: {{val.id}},
@@ -71,9 +71,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           protected def self.from_named_truple(res : RespTuple) : {{ @type }}
             {{@type}}.new(
               {% for name, val in ATTR_TYPES %}
-                {% if val.id == "UUID" %}
-                  {{name.id}}: res[:{{name.id}}].nil? ? nil : UUID.new(res[:{{name.id}}].as(String)),
-                {% elsif val.id == "JSON::Any" %}
+                {% if val.id == "JSON::Any" %}
                   {{name.id}}: res[:{{name.id}}].nil? ? nil : JSON.parse(res[:{{name.id}}].as(String)),
                 {% else %}
                   {{name.id}}: res[:{{name.id}}],
@@ -89,7 +87,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
             results : Array({{@type}}) = Array({{@type}}).new
             adapter.with_ro_database do |client_ro|
-              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
+              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.new(**r).mark_saved.mark_clean }
             end
             results
           end
@@ -133,7 +131,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
                 unless {{name.id}}.nil?
                   io << "`{{name.id}}` = "
                 {% if val.id == "UUID" %}
-                  io << "'" << {{name.id}}.to_s << "'"
+                  io << "UUID_TO_BIN('" << {{name.id}}.to_s << "')"
                 {% elsif val.id == "JSON::Any" %}
                 {% elsif val.id == "String" %}
                   io << "\"" << {{name.id}}.to_s.gsub(subs) << "\""
@@ -174,9 +172,11 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               )
             end
 
+            {% if PRIMARY_TYPE == Int32 %}
             if resp.not_nil!.rows_affected > 0 && primary_key_val.nil? && resp.not_nil!.last_insert_id > 0
               self.set({{@type}}.primary_key_name, resp.not_nil!.last_insert_id.to_i32)
             end
+            {% end %}
           end
 
           def _update_record
