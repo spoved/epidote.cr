@@ -81,9 +81,9 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           private def self._query_all(where = "")
-            logger.debug { "querying all records"}
+            logger.trace { "querying all records"}
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
-            logger.debug { "_query_all: #{sql}"}
+            logger.trace { "_query_all: #{sql}"}
 
             results : Array({{@type}}) = Array({{@type}}).new
             adapter.with_ro_database do |client_ro|
@@ -95,7 +95,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           def self.each(where = "", &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
-            logger.debug { "each: #{sql}"}
+            logger.trace { "each: #{sql}"}
 
             adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|
               block.call self.from_named_truple(r).mark_saved.mark_clean
@@ -105,7 +105,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           def self.find(id)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
-            logger.debug { "find: #{sql}; id: #{id}"}
+            logger.trace { "find: #{sql}; id: #{id}"}
             item : {{@type}}? = nil
             adapter.with_ro_database do |client_ro|
               resp = client_ro.query_one(sql, id, as: RES_STRUCTURE)
@@ -143,7 +143,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% end %}
             end
 
-            logger.debug { where.chomp(" AND ") }
+            logger.trace { where.chomp(" AND ") }
             self._query_all(where.chomp(" AND "))
           end
 
@@ -151,7 +151,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-            logger.debug { "_delete_record: #{sql}"}
+            logger.trace { "_delete_record: #{sql}"}
             adapter.with_rw_database do |conn|
               conn.exec(sql, self.primary_key_val)
             end
@@ -161,7 +161,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             %cols = {{@type}}.attributes.map {|x| "`#{x}` = ?"}
 
             sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
-            logger.debug { "_insert_record: #{sql}"}
+            logger.trace { "_insert_record: #{sql}"}
 
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
@@ -189,7 +189,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-            logger.debug { "_update_record: #{sql}"}
+            logger.trace { "_update_record: #{sql}"}
             adapter.with_rw_database do |conn|
               conn.exec(sql,
                 {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}

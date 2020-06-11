@@ -1,21 +1,21 @@
 name: epidote
-version: 0.2.3
+version: 0.3.0
 
 authors:
   - Holden Omans <holden.omans@gmail.com>
 
-crystal: 0.34.0
+crystal: 0.35.0
 
 license: MIT
 
 dependencies:
   spoved:
     github: spoved/spoved.cr
-    version: ">= 0.2.1"
+    version: ">= 0.3.0"
   mongo:
     github: kalinon/mongo.cr
     # branch: master
-    version: ~> 0.3.0
+    version: ~> 0.4.0
   mysql:
     # github: crystal-lang/crystal-mysql
     github: kalinon/crystal-mysql

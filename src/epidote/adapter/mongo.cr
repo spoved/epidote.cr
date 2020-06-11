@@ -65,7 +65,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     yield client[self.database_name]
   rescue ex
     logger.error(exception: ex) { "with_database: #{ex.message}" }
-    logger.debug { ex.backtrace }
+    logger.trace { ex.backtrace }
     raise ex
   end
 
@@ -75,7 +75,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     end
   rescue ex
     logger.error(exception: ex) { "with_collection: #{ex.message}" }
-    logger.debug { ex.backtrace }
+    logger.trace { ex.backtrace }
     raise ex
   end
 end

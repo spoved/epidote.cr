@@ -77,7 +77,7 @@ abstract class Epidote::Model
     self.valid!
     raise Epidote::Error::ExistingRecord.new("record already exists!") if self.saved?
 
-    logger.debug { "inserting record: #{self}" }
+    logger.trace { "inserting record: #{self}" }
     self._insert_record
     self.mark_saved
     self.mark_clean
@@ -109,7 +109,7 @@ abstract class Epidote::Model
   # ```
   def destroy! : Nil
     raise Epidote::Error::MissingRecord.new unless saved?
-    logger.debug { "deleting record: #{self.primary_key_val.to_s}" }
+    logger.trace { "deleting record: #{self.primary_key_val.to_s}" }
 
     self._delete_record
     self.saved = false
@@ -142,7 +142,7 @@ abstract class Epidote::Model
 
     raise Epidote::Error::MissingRecord.new unless saved?
     self.valid!
-    logger.debug { "updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
+    logger.trace { "updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
 
     self._update_record
     self.mark_clean

@@ -52,10 +52,10 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               if db.has_collection?(COLLECTION)
                 raise Epidote::Error.new("Collection #{COLLECTION} already exists")
               else
-                logger.verbose { "creating collection: #{COLLECTION}" }
+                logger.debug { "creating collection: #{COLLECTION}" }
                 db.create_collection(COLLECTION, options)
 
-                logger.verbose { "adding indexes to collection: #{COLLECTION}" }
+                logger.debug { "adding indexes to collection: #{COLLECTION}" }
                 adapter.with_collection(COLLECTION) do |coll|
                   INDEXES.each do |index, opts|
                     coll.create_index(index, opts)
@@ -76,7 +76,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def self.from_bson(bson : BSON)
-            logger.debug { "raw bson: #{bson}"}
+            logger.trace { "raw bson: #{bson}"}
             new_ob = self.allocate
             bson.each_key do |%key|
               %value = bson[%key]
@@ -104,7 +104,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           private def self._query_all
-            logger.debug { "querying all records"}
+            logger.trace { "querying all records"}
 
             results = [] of {{@type}}
             with_collection do |coll|
@@ -138,7 +138,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             results = Array({{@type}}).new
             with_collection do |col|
               res = col.find(%query)
-              logger.verbose { "query: #{%query}" }
+              logger.debug { "query: #{%query}" }
               res.each do |r|
                 results << from_bson(r)
               end
@@ -156,7 +156,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             result : {{@type}}? = nil
             with_collection do |col|
               bson = col.find_one({"_id" => id.to_s})
-              logger.verbose { "find: id: #{id.to_s} returned: #{bson}" }
+              logger.debug { "find: id: #{id.to_s} returned: #{bson}" }
               result = from_bson(bson) unless bson.nil?
             end
             result
@@ -190,7 +190,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               coll.insert(doc)
               if (err = coll.last_error)
                 %id = doc["_id"].to_s.chomp('\u0000')
-                logger.debug { "created record #{%id}" }
+                logger.trace { "created record #{%id}" }
               end
             end
           end
