@@ -133,10 +133,13 @@ abstract class Epidote::Model::MySQL < Epidote::Model
                 {% if val.id == "UUID" %}
                   io << "UUID_TO_BIN('" << {{name.id}}.to_s << "')"
                 {% elsif val.id == "JSON::Any" %}
+
                 {% elsif val.id == "String" %}
-                  io << "\"" << {{name.id}}.to_s.gsub(subs) << "\""
+                  io << '"' << {{name.id}}.to_s.gsub(subs) << '"'
+                {% elsif val.id == "Bool" %}
+                  io << {{name.id}}.to_s
                 {% else %}
-                  io << "\"" << {{name.id}}.to_s.gsub(subs) << "\""
+                  io << '"' << {{name.id}}.to_s.gsub(subs) << '"'
                 {% end %}
                   io << " AND "
                 end
