@@ -47,4 +47,4 @@ services:
     command:
       - /bin/sh
       - -c
-      - "shards && crystal spec -v -Duse_mongo_static --error-trace" 
+      - "shards && crystal spec -v --error-trace" 

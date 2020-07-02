@@ -17,9 +17,8 @@ describe Epidote::Adapter::Mongo do
     adapter.client_name.should eq Epidote::Adapter::Mongo::MONGODB_DB_NAME
   end
 
-  # it "#with_database" do
-  #   adapter.with_database do |db|
-  #     db.should be_a ::Mongo::Database
-  #   end
-  # end
+  it "#has_collection?" do
+    adapter.client[adapter.database_name].has_collection?("my_model").should be_true
+    adapter.client[adapter.database_name].has_collection?("made_up").should be_false
+  end
 end

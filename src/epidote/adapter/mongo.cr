@@ -26,7 +26,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
 
   private def self.new_client(uri)
     logger.info { "creating new mongo client" }
-    ::Mongo::Client.new uri
+    ::Mongo::Client.new(uri, ::Mongo::Options.new(auth_mechanism: "SCRAM-SHA-1"))
   end
 
   def self.client : ::Mongo::Client

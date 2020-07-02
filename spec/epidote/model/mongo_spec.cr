@@ -33,7 +33,10 @@ describe Epidote::Model::Mongo do
       name: "my_name",
       unique_name: "model1"
     )
-    model.to_json.should eq %|{"_id":"5ebb05cd1761ee7ef4165742","name":"my_name","unique_name":"model1","default_value":"a string"}|
+    json_string = %|{"_id":{"$oid":"5ebb05cd1761ee7ef4165742"},"name":"my_name","unique_name":"model1","default_value":"a string"}|
+    model.to_json.should eq json_string
+
+    MyModel::Mongo.from_json(json_string).should eq model
   end
 
   it "#to_hash" do

@@ -85,12 +85,30 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                 end
               {% for name, typ in ATTR_TYPES %}
               when {{name.id.stringify}}
-                  {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
-                  new_ob.{{name.id}} = {{typ.id}}.from_bson %value
-                  {% else %}
-                  new_ob.{{name.id}} = %value.as({{typ.id}})
-                  {% end %}
-
+                  if %value.is_a?({{typ.id}})
+                    new_ob.{{name.id}} = %value
+                  else
+                      case %value
+                      when String
+                        {% if typ.id == "UUID" %}
+                        new_ob.{{name.id}} = UUID.new(%value) 
+                        {% else %}
+                        raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
+                        {% end %}
+                      when Int64
+                        {% if typ.id == "Int32" %}
+                        new_ob.{{name.id}} = %value.to_i32
+                        {% else %}
+                        raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
+                        {% end %}
+                      else
+                        {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
+                          new_ob.{{name.id}} = {{typ.id}}.from_bson %value              
+                        {% else %}
+                          raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
+                        {% end %}
+                      end
+                    end
               {% end %}
               else
                 raise "Unable to set #{%key} with #{%value.inspect}"
@@ -151,8 +169,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def self.find(id : BSON::ObjectId) : {{@type}}?
             result : {{@type}}? = nil
             with_collection do |col|
-              bson = col.find_one({"_id" => id.to_s})
-              logger.debug { "find: id: #{id.to_s} returned: #{bson}" }
+              bson = col.find_one({"_id" => id})
+              logger.debug { "find: id: #{id.to_s} returned: #{bson.to_json}" }
               result = from_bson(bson) unless bson.nil?
             end
             result
@@ -164,7 +182,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def _delete_record
             res = false
             self.with_collection do |coll|
-              r = coll.delete_one({"_id" => id.to_s})
+              r = coll.delete_one({"_id" => id})
               unless r.nil?
                 res = r.n == 1 ? true : false
               end
@@ -191,7 +209,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def _update_record
            {{@type}}.with_collection do |coll|
-              coll.update_one({"_id" => id.to_s}, {"$set" => self.attr_string_hash})
+              coll.update_one({"_id" => id}, {"$set" => self.attr_string_hash})
             end
           end
         {% end %}
