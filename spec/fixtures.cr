@@ -24,7 +24,7 @@ class MyOtherModel::Mongo < Epidote::Model::Mongo
   attribute :uuid, UUID
   attribute :extra_data, JSON::Any
 
-  @[BSON::Prop(ignore: true)]
+  @[BSON::Field(ignore: true)]
   @[JSON::Field(ignore: true)]
   @pre_commit_calls = 0
 
@@ -36,7 +36,7 @@ class MyOtherModel::Mongo < Epidote::Model::Mongo
     @pre_commit_calls += 1
   }
 
-  @[BSON::Prop(ignore: true)]
+  @[BSON::Field(ignore: true)]
   @[JSON::Field(ignore: true)]
   @post_commit_calls = 0
 

@@ -1,5 +1,5 @@
 require "../adapter"
-require "mongo"
+require "cryomongo"
 
 class Epidote::Adapter::Mongo < Epidote::Adapter
   MONGODB_DB_NAME = ENV["CRYSTAL_ENV"]? ? "#{ENV["MONGODB_DB_NAME"]}_#{ENV["CRYSTAL_ENV"]?}" : "#{ENV["MONGODB_DB_NAME"]}"
@@ -37,13 +37,13 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     @@client_ro ||= client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
   end
 
-  # def self.close
-  #   unless @@client.nil?
-  #     logger.warn { "closing mongo client" }
-  #     @@client.not_nil!.close
-  #     @@client = nil
-  #   end
-  # end
+  def self.close
+    unless @@client.nil?
+      logger.warn { "closing mongo client" }
+      @@client.not_nil!.close
+      @@client = nil
+    end
+  end
 
   def self.client_name
     MONGODB_DB_NAME
@@ -80,4 +80,4 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
   end
 end
 
-# at_exit { Epidote::Adapter::Mongo.close }
+at_exit { Epidote::Adapter::Mongo.close }

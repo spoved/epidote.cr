@@ -2,16 +2,16 @@ version: "3.8"
 services:
   mongo:
     image: mongo:4
-    # ports:
-    #   - 27017:27017
+    ports:
+      - 27017:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
   mongo-express:
     image: mongo-express
     restart: always
-    # ports:
-    #   - 8081:8081
+    ports:
+      - 8081:8081
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
@@ -23,8 +23,8 @@ services:
       MYSQL_DATABASE: epidote_test
     volumes: 
       - ./spec/mysql:/docker-entrypoint-initdb.d/
-    # ports:
-    #   - 3306:3306
+    ports:
+      - 3306:3306
   test:
     build: .
     environment:

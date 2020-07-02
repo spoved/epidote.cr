@@ -10,7 +10,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
   macro inherited
     Log = ::Log.for(self)
-    INDEXES = Hash(BSON, ::Mongo::IndexOpt).new
+    INDEXES = Hash(BSON, NamedTuple(name: String, unique: Bool)).new
   end
 
   macro add_index(keys, **options)
@@ -18,7 +18,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
       {% for name in keys %}
       {{name.id.stringify}} => 1,
       {% end %}
-    }.to_bson] = ::Mongo::IndexOpt.new(
+    }.to_bson] = {
         {% if options[:index_name] %}
         name: {{options[:index_name].stringify}},
         {% else %}
@@ -27,7 +27,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
         {% if options[:unique] %}
         unique: true,
         {% end %}
-      )
+    }
   end
 
   macro _epidote_methods
@@ -37,11 +37,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def self.drop
             logger.warn { "dropping collection: #{COLLECTION}"}
-
             adapter.with_database do |db|
-              if db.has_collection?(COLLECTION)
-                adapter.with_collection(COLLECTION, &.drop)
-              end
+              db.client.command(::Mongo::Commands::Drop, database: db.name, name: COLLECTION)
             end
           end
 
@@ -53,12 +50,12 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                 raise Epidote::Error.new("Collection #{COLLECTION} already exists")
               else
                 logger.debug { "creating collection: #{COLLECTION}" }
-                db.create_collection(COLLECTION, options)
+                db.client.command(::Mongo::Commands::Create, database: db.name, name: COLLECTION, options: options)
 
                 logger.debug { "adding indexes to collection: #{COLLECTION}" }
                 adapter.with_collection(COLLECTION) do |coll|
                   INDEXES.each do |index, opts|
-                    coll.create_index(index, opts)
+                    coll.create_index(index, options: opts)
                   end
                 end
               end
@@ -78,8 +75,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def self.from_bson(bson : BSON)
             logger.trace { "raw bson: #{bson}"}
             new_ob = self.allocate
-            bson.each_key do |%key|
-              %value = bson[%key]
+            bson.each do |%key, %value|
               case %key
               when "_id"
                 if %value.is_a?(String)
@@ -108,7 +104,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
             results = [] of {{@type}}
             with_collection do |coll|
-              coll.find(BSON.new) do |doc|
+              coll.find(BSON.new).each do |doc|
                 results << from_bson(doc).mark_saved.mark_clean
               end
             end
@@ -117,7 +113,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def self.each(&block : {{@type}} -> _)
             with_collection do |coll|
-              coll.find(BSON.new) do |doc|
+              coll.find(BSON.new).each do |doc|
                 block.call from_bson(doc).mark_saved.mark_clean
               end
             end
@@ -168,11 +164,9 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def _delete_record
             res = false
             self.with_collection do |coll|
-              coll.remove({"_id" => id.to_s})
-              if (err = coll.last_error)
-                res =  err["nRemoved"] == 1 ? true : false
-              else
-                res =  false
+              r = coll.delete_one({"_id" => id.to_s})
+              unless r.nil?
+                res = r.n == 1 ? true : false
               end
             end
             res
@@ -187,8 +181,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                 doc["id"] = nil
               end
 
-              coll.insert(doc)
-              if (err = coll.last_error)
+              r = coll.insert_one(doc)
+              if !r.nil? && r.n == 1
                 %id = doc["_id"].to_s.chomp('\u0000')
                 logger.trace { "created record #{%id}" }
               end
@@ -197,7 +191,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def _update_record
            {{@type}}.with_collection do |coll|
-              coll.update({"_id" => id.to_s}, {"$set" => self.attr_string_hash})
+              coll.update_one({"_id" => id.to_s}, {"$set" => self.attr_string_hash})
             end
           end
         {% end %}

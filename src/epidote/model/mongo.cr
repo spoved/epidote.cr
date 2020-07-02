@@ -2,7 +2,7 @@ require "json"
 require "uuid"
 require "uuid/json"
 
-require "mongo"
+require "cryomongo"
 require "../../epidote"
 require "../adapter/mongo"
 require "../macros/mongo"
