@@ -38,7 +38,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def self.drop
             logger.warn { "dropping collection: #{COLLECTION}"}
             adapter.with_database do |db|
-              db.client.command(::Mongo::Commands::Drop, database: db.name, name: COLLECTION)
+
+              db.client.command(::Mongo::Commands::Drop, database: db.name, name: COLLECTION) if db.has_collection?(COLLECTION)
             end
           end
 
