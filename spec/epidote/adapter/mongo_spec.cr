@@ -18,7 +18,9 @@ describe Epidote::Adapter::Mongo do
   end
 
   it "#has_collection?" do
+    MyModel::Mongo.drop
+    adapter.client[adapter.database_name].has_collection?("my_model").should be_false
+    MyModel::Mongo.init_collection!
     adapter.client[adapter.database_name].has_collection?("my_model").should be_true
-    adapter.client[adapter.database_name].has_collection?("made_up").should be_false
   end
 end
