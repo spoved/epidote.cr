@@ -49,6 +49,11 @@ class MyOtherModel::Mongo < Epidote::Model::Mongo
   }
 end
 
+class BoolTestModel::Mongo < Epidote::Model::Mongo
+  collection(:bool_test_model)
+  attribute :active, Bool, default: false, not_nil: true
+end
+
 class MyModel::MySQL < Epidote::Model::MySQL
   table(:my_model)
   attributes(

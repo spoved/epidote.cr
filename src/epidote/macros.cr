@@ -4,7 +4,7 @@ require "json"
 abstract class Epidote::Model
   macro attribute(name, type, **options)
     @[::JSON::Field]
-    @{{name.id}} : {{type}}? = {% if options.keys.includes?(:default) %} {{options[:default]}} {% else %} nil {% end %}
+    @{{name.id}} : {{type}}? = {% unless options[:default].nil? %} {{options[:default]}} {% else %} nil {% end %}
 
     def {{name.id}}=(val : {{type}})
       @{{name.id}} = val
@@ -142,7 +142,7 @@ abstract class Epidote::Model
 
           def initialize(
             {% for name, anno in properties %}
-              @{{name}} : {{ anno[:type] }}? = {% if anno[:default] %} {{anno[:default]}} {% else %} nil {% end %},
+              @{{name}} : {{ anno[:type] }}? = {% unless anno[:default].nil? %} {{anno[:default]}} {% else %} nil {% end %},
             {% end %}
           )
           end
