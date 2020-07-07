@@ -4,7 +4,7 @@ require "json"
 abstract class Epidote::Model
   macro attribute(name, type, **options)
     @[::JSON::Field]
-    @{{name.id}} : {{type}}? = {% if options[:default] %} {{options[:default]}} {% else %} nil {% end %}
+    @{{name.id}} : {{type}}? = {% if options.keys.includes?(:default) %} {{options[:default]}} {% else %} nil {% end %}
 
     def {{name.id}}=(val : {{type}})
       @{{name.id}} = val

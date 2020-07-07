@@ -31,6 +31,8 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
 
   private def self.new_client(uri)
     logger.info { "creating new MySQL client" }
+    logger.trace { uri.to_s }
+
     ::DB.open uri
   end
 
