@@ -61,8 +61,17 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   end
 
   def self.close
-    client.close unless @@client.nil?
-    client_ro.close unless @@client_ro.nil?
+    unless @@client.nil?
+      logger.warn { "closing mysql client" }
+      @@client.not_nil!.close
+      @@client = nil
+    end
+
+    unless @@client_ro.nil?
+      logger.warn { "closing mysql RO client" }
+      @@client_ro.not_nil!.close
+      @@client_ro = nil
+    end
   end
 
   def self.init_database
@@ -88,4 +97,4 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   end
 end
 
-# at_exit { Epidote::Adapter::MySQL.close }
+at_exit { Epidote::Adapter::MySQL.close }
