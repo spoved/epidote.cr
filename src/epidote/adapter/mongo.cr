@@ -39,13 +39,13 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
 
   def self.close
     unless @@client.nil?
-      logger.warn { "closing mongo client" }
+      logger.debug { "closing mongo client" }
       @@client.not_nil!.close
       @@client = nil
     end
 
     unless @@client_ro.nil?
-      logger.warn { "closing mongo RO client" }
+      logger.debug { "closing mongo RO client" }
       @@client_ro.not_nil!.close
       @@client_ro = nil
     end

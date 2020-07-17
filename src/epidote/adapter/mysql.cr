@@ -62,13 +62,13 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
 
   def self.close
     unless @@client.nil?
-      logger.warn { "closing mysql client" }
+      logger.debug { "closing mysql client" }
       @@client.not_nil!.close
       @@client = nil
     end
 
     unless @@client_ro.nil?
-      logger.warn { "closing mysql RO client" }
+      logger.debug { "closing mysql RO client" }
       @@client_ro.not_nil!.close
       @@client_ro = nil
     end
