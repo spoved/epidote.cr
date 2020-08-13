@@ -26,13 +26,15 @@ abstract class Epidote::Model
   abstract def primary_key_val
 
   @[JSON::Field(ignore: true)]
+  @[BSON::Field(ignore: true)]
   protected property saved : Bool = false
 
   @[JSON::Field(ignore: true)]
+  @[BSON::Field(ignore: true)]
   protected property dirty : Bool = false
 
   def self.query_one(**args)
-    self.query(**args)[0]?
+    self.query(**args, limit: 1)[0]?
   end
 
   # Indicates if the record has been saved to the database or is a new record

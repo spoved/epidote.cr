@@ -18,7 +18,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
   end
 
   def self.first
-    _query_all("LIMIT 1")[0]?
+    _query_all(limit: 1)[0]?
   rescue ex
     logger.error { ex }
     nil

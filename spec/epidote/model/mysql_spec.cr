@@ -817,6 +817,20 @@ describe Epidote::Model::MySQL do
         end
         called.should be > 0
       end
+
+      it "limits and offsets" do
+        MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+        MyModel::MySQL.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+        MyModel::MySQL.all(limit: 1).size.should eq 1
+
+        res = MyModel::MySQL.all(limit: 1)
+        res.size.should eq 1
+        res.first.name.should eq "my_name"
+
+        res = MyModel::MySQL.all(limit: 1, offset: 1)
+        res.size.should eq 1
+        res.first.name.should eq "my_other_name"
+      end
     end
   end
 end

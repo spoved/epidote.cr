@@ -8,7 +8,10 @@ require "../adapter/mongo"
 require "../macros/mongo"
 
 abstract class Epidote::Model::Mongo < Epidote::Model
+  include BSON::Serializable
+
   @[::JSON::Field(key: "_id")]
+  @[::BSON::Field(key: "_id")]
   setter id : BSON::ObjectId = BSON::ObjectId.new
 
   @[::Epidote::DB::Model::Attr(name: :id, type: BSON::ObjectId, default: BSON::ObjectId.new,

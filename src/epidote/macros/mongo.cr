@@ -118,12 +118,12 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             new_ob
           end
 
-          private def self._query_all
+          private def self._query_all(limit : Int32 = 0, offset : Int32 = 0)
             logger.trace { "querying all records"}
 
             results = [] of {{@type}}
             with_collection do |coll|
-              coll.find(BSON.new).each do |doc|
+              coll.find(BSON.new, limit: (limit <= 0 ? nil : limit), skip: (offset <= 0 ? nil : offset)).each do |doc|
                 results << from_bson(doc).mark_saved.mark_clean
               end
             end
@@ -139,6 +139,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def self.query(
+            limit : Int32 = 0,
+            offset : Int32 = 0,
             {% for name, type in ATTR_TYPES %}
               {{name.id}} : {{type}}? = nil,
             {% end %}
@@ -193,7 +195,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
           def _insert_record
             self.with_collection do |coll|
-              doc = BSON.from_json(self.to_json)
+              # doc = BSON.from_json(self.to_json)
+              doc = self.to_bson
 
               if doc.has_key?("id")
                 doc["_id"] = BSON::ObjectId.new(doc["id"].to_s)

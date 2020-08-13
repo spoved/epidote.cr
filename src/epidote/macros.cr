@@ -195,8 +195,8 @@ abstract class Epidote::Model
           end
 
           # Return an array containing all of the `{{@type}}` records
-          def self.all : Array({{@type}})
-            self._query_all
+          def self.all(limit : Int32 = 0, offset : Int32 = 0,) : Array({{@type}})
+            self._query_all(limit: limit, offset: offset)
           end
 
           def get(name : Symbol)
