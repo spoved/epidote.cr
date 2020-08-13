@@ -33,4 +33,14 @@ abstract class Epidote::Model::MySQL < Epidote::Model
     logger.warn { "truncating table: #{table_name}" }
     adapter.client.exec("TRUNCATE TABLE `#{table_name}`")
   end
+
+  def self.size : Int32 | Int64
+    count = 0
+    adapter.with_ro_database do |client_ro|
+      client_ro.query_one("SELECT count(*) FROM `#{self.table_name}`") do |rs|
+        count = rs.read(Int64)
+      end
+    end
+    count
+  end
 end

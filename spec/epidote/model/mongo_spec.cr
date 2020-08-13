@@ -818,6 +818,12 @@ describe Epidote::Model::Mongo do
         MyModel::Mongo.all.size.should eq 2
       end
 
+      it "#size" do
+        MyModel::Mongo.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+        MyModel::Mongo.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+        MyModel::Mongo.size.should eq 2
+      end
+
       it "limits and offsets" do
         MyModel::Mongo.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
         MyModel::Mongo.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!

@@ -806,6 +806,12 @@ describe Epidote::Model::MySQL do
         MyModel::MySQL.all.size.should eq 2
       end
 
+      it "#size" do
+        MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+        MyModel::MySQL.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+        MyModel::MySQL.size.should eq 2
+      end
+
       it "#each" do
         MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
         MyModel::MySQL.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!

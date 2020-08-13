@@ -31,4 +31,12 @@ abstract class Epidote::Model::Mongo < Epidote::Model
   def id=(value : String)
     self.id = BSON::ObjectId.new(value)
   end
+
+  def self.size : Int32 | Int64
+    count = 0
+    with_collection do |coll|
+      count = coll.estimated_document_count
+    end
+    count
+  end
 end
