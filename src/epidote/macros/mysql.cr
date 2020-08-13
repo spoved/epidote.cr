@@ -83,6 +83,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
             logger.trace { "querying all records"}
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where} #{_limit_query(limit, offset)}"
+
             logger.trace { "_query_all: #{sql}"}
 
             results : Array({{@type}}) = Array({{@type}}).new
@@ -129,19 +130,18 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             end
           end
 
-          def self.query(
-            limit : Int32 = 0,
-            offset : Int32 = 0,
-            {% for name, val in ATTR_TYPES %}
-              {{name.id}} : {{val}}? = nil,
-            {% end %}
-          )
 
-            subs = {
-              '"'  => "\\\"",
-            }
+          SUBS = {
+            '"'  => "\\\"",
+          }
+
+          def self._where_query(           
+              {% for name, val in ATTR_TYPES %}
+                {{name.id}} : {{val}}? = nil,
+              {% end %}
+          ) : String
+
             where = String.build do |io|
-              io << "WHERE "
               {% for name, val in ATTR_TYPES %}
                 unless {{name.id}}.nil?
                   io << "`{{name.id}}` = "
@@ -150,19 +150,29 @@ abstract class Epidote::Model::MySQL < Epidote::Model
                 {% elsif val.id == "JSON::Any" %}
 
                 {% elsif val.id == "String" %}
-                  io << '"' << {{name.id}}.to_s.gsub(subs) << '"'
+                  io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
                 {% elsif val.id == "Bool" %}
                   io << {{name.id}}.to_s
                 {% else %}
-                  io << '"' << {{name.id}}.to_s.gsub(subs) << '"'
+                  io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
                 {% end %}
                   io << " AND "
                 end
               {% end %}
             end
+            where.empty? ? where : "WHERE #{where.chomp(" AND ")}"
+          end
 
-            logger.trace { where.chomp(" AND ") }
-            self._query_all(limit, offset, where.chomp(" AND "))
+          def self.query(
+            limit : Int32 = 0,
+            offset : Int32 = 0,
+            **args,
+          )
+
+            where = _where_query(**args)
+
+            logger.trace {  }
+            self._query_all(limit, offset, where)
           end
 
           def _delete_record

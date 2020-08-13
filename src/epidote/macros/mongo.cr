@@ -118,7 +118,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             new_ob
           end
 
-          private def self._query_all(limit : Int32 = 0, offset : Int32 = 0)
+          private def self._query_all(query : BSON = BSON.new, limit : Int32 = 0, offset : Int32 = 0)
             logger.trace { "querying all records"}
 
             results = [] of {{@type}}
@@ -138,33 +138,38 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             end
           end
 
-          def self.query(
-            limit : Int32 = 0,
-            offset : Int32 = 0,
-            {% for name, type in ATTR_TYPES %}
-              {{name.id}} : {{type}}? = nil,
+          def self._where_query(           
+            {% for name, val in ATTR_TYPES %}
+              {{name.id}} : {{val}}? = nil,
             {% end %}
-          ) : Array({{@type}})
-
+          )
             %query = Hash(String, ValTypes).new
-
             {% for name, type in ATTR_TYPES %}
             %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
             {% end %}
+            %query
+          end
 
+          def self.query(
+            limit : Int32 = 0,
+            offset : Int32 = 0,
+            **args
+          ) : Array({{@type}})
+
+            %query = _where_query(**args)
             results = Array({{@type}}).new
+
             with_collection do |col|
-              res = col.find(%query)
+              res = col.find(%query, limit: (limit <= 0 ? nil : limit), skip: (offset <= 0 ? nil : offset) )
               logger.debug { "query: #{%query}" }
               res.each do |r|
                 results << from_bson(r)
               end
-              # result = from_bson(bson) unless bson.nil?
             end
 
             results
           rescue ex
-            logger.error(exception: ex) { "Error when trying to locate record with id: #{id.to_s}" }
+            logger.error(exception: ex) { "Error when trying to locate record: #{args.to_s}" }
             Array({{@type}}).new
           end
 

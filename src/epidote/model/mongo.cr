@@ -32,10 +32,14 @@ abstract class Epidote::Model::Mongo < Epidote::Model
     self.id = BSON::ObjectId.new(value)
   end
 
-  def self.size : Int32 | Int64
+  def self.size(**args) : Int32 | Int64
     count = 0
     with_collection do |coll|
-      count = coll.estimated_document_count
+      if args.empty?
+        count = coll.estimated_document_count
+      else
+        count = coll.count_documents(_where_query(**args))
+      end
     end
     count
   end
