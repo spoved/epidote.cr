@@ -18,6 +18,7 @@ abstract class Epidote::Model
       {{k}}: {{v}},
       {% end %}
     )]
+    # type: {{type}} options: {{options}}
     {% if options[:not_nil] %}
     def {{name.id}} : {{type}}
       @{{name.id}}.not_nil!

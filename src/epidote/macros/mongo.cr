@@ -24,9 +24,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
         {% else %}
         name: "_index_{{keys.join("_").id}}",
         {% end %}
-        {% if options[:unique] %}
-        unique: true,
-        {% end %}
+        unique:  {% if options[:unique] %}true{% else %}false{% end %},
     }
   end
 
@@ -104,7 +102,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                         {% end %}
                       else
                         {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
-                          new_ob.{{name.id}} = {{typ.id}}.from_bson %value              
+                          new_ob.{{name.id}} = {{typ.id}}.from_bson %value
                         {% else %}
                           raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
                         {% end %}
