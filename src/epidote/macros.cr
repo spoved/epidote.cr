@@ -3,7 +3,22 @@ require "json"
 
 abstract class Epidote::Model
   macro attribute(name, type, **options)
-    @[::JSON::Field]
+
+    {% if options[:converter] %}
+    struct ::BSON
+      class Builder
+        def []=(key : String, value : {{type}})
+          self[key] = ::{{options[:converter]}}.to_bson(value)
+        end
+      end
+    end
+    {% end %}
+
+    @[::JSON::Field(
+      {% if options[:converter] %}
+      converter: {{options[:converter]}}
+      {% end %}
+    )]
     @{{name.id}} : {{type}}? = {% unless options[:default].nil? %} {{options[:default]}} {% else %} nil {% end %}
 
     def {{name.id}}=(val : {{type}})

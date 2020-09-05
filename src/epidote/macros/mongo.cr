@@ -84,6 +84,16 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                 end
               {% for name, typ in ATTR_TYPES %}
               when {{name.id.stringify}}
+
+                  {% meth = @type.methods.select {|m| m.name == name}.first %}
+                  {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
+                    {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
+                    {% if anno && anno.named_args[:converter] %}
+                    new_ob.{{name.id}} = {{anno.named_args[:converter]}}.from_bson %value
+                    {% end %}
+                  {% else %}
+
+
                   if %value.is_a?({{typ.id}})
                     new_ob.{{name.id}} = %value
                   else
@@ -101,13 +111,16 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                         raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
                         {% end %}
                       else
-                        {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
-                          new_ob.{{name.id}} = {{typ.id}}.from_bson %value
-                        {% else %}
-                          raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
-                        {% end %}
+
+         
+                          {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
+                            new_ob.{{name.id}} = {{typ.id}}.from_bson %value
+                          {% else %}
+                            raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
+                          {% end %}
                       end
                     end
+                {% end %}
               {% end %}
               else
                 raise "Unable to set #{%key} with #{%value.inspect}"
