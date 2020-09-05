@@ -66,6 +66,14 @@ abstract class Epidote::Model
 
   protected def _post_commit_hook; end
 
+  def self.create(**args)
+    new(**args).save
+  end
+
+  def self.create!(**args)
+    new(**args).save!
+  end
+
   # This will save the record to the database but will raise any errors encountered
   # ```
   # model = MyModel.new(name: "one", unique_name: "model1")

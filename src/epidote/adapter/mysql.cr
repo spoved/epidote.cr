@@ -4,6 +4,13 @@ require "mysql"
 class Epidote::Adapter::MySQL < Epidote::Adapter
   alias DataHash = Hash(String, Array(JSON::Any) | Bool | Float64 | Hash(String, JSON::Any) | Int64 | String | Nil)
 
+  OPTIONS = HTTP::Params.new({
+    "retry_attempts"     => ["8"],
+    "retry_delay"        => ["3"],
+    "max_pool_size"      => ["2"],
+    "max_idle_pool_size" => ["0"],
+  })
+
   MYSQL_DB_NAME = ENV["CRYSTAL_ENV"]? ? "#{ENV["MYSQL_DB_NAME"]}_#{ENV["CRYSTAL_ENV"]?}" : "#{ENV["MYSQL_DB_NAME"]}"
 
   MYSQL_URI = URI.new(
@@ -11,9 +18,9 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     host: ENV["MYSQL_HOST"]? || "localhost",
     port: (ENV["MYSQL_PORT"]? || 3306).to_i,
     path: "" + MYSQL_DB_NAME,
-    # query: "schema=#{MYSQL_DB_NAME}",
     user: ENV["MYSQL_USER"]? || "root",
-    password: ENV["MYSQL_PASS"]? || ""
+    password: ENV["MYSQL_PASS"]? || "",
+    query: OPTIONS.to_s,
   )
 
   MYSQL_RO_URI = URI.new(
@@ -21,9 +28,9 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     host: ENV["MYSQL_RO_HOST"]? || ENV["MYSQL_HOST"]? || "localhost",
     port: (ENV["MYSQL_RO_PORT"]? || ENV["MYSQL_PORT"]? || 3306).to_i,
     path: "" + MYSQL_DB_NAME,
-    # query: "schema=#{MYSQL_DB_NAME}",
     user: ENV["MYSQL_USER"]? || "root",
-    password: ENV["MYSQL_PASS"]? || ""
+    password: ENV["MYSQL_PASS"]? || "",
+    query: OPTIONS.to_s,
   )
 
   @@client : ::DB::Database? = nil
@@ -32,7 +39,6 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   private def self.new_client(uri)
     logger.info { "creating new MySQL client" }
     logger.trace { uri.to_s }
-
     ::DB.open uri
   end
 

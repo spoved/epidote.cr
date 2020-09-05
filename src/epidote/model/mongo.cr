@@ -10,7 +10,18 @@ require "../macros/mongo"
 abstract class Epidote::Model::Mongo < Epidote::Model
   include BSON::Serializable
 
-  @[::JSON::Field(key: "_id")]
+  struct ObjectIdConverter
+    def self.from_json(pull : JSON::PullParser)
+      string = pull.read_string
+      BSON::ObjectId.new(string)
+    end
+    
+    def self.to_json(value : BSON::ObjectId, json : JSON::Builder)
+      value.to_s.to_json(json)
+    end
+  end
+
+  @[::JSON::Field(converter: Epidote::Model::Mongo::ObjectIdConverter)]
   @[::BSON::Field(key: "_id")]
   setter id : BSON::ObjectId = BSON::ObjectId.new
 
