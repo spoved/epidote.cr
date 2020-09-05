@@ -20,7 +20,7 @@ Spec.before_each do
   end
 end
 
-describe Epidote::Model::Mongo, focus: true do
+describe Epidote::Model::Mongo do
   describe "static methods" do
     it "#collection_name" do
       MyModel::Mongo.collection_name.should eq "my_model"

@@ -15,7 +15,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
       string = pull.read_string
       BSON::ObjectId.new(string)
     end
-    
+
     def self.to_json(value : BSON::ObjectId, json : JSON::Builder)
       value.to_s.to_json(json)
     end

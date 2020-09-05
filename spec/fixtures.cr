@@ -54,6 +54,11 @@ class BoolTestModel::Mongo < Epidote::Model::Mongo
   attribute :active, Bool, default: false, not_nil: true
 end
 
+class SubHashModel::Mongo < Epidote::Model::Mongo
+  collection(:sub_hash_model)
+  attribute :extra_data, Hash(String, String | Array(String))
+end
+
 class MyModel::MySQL < Epidote::Model::MySQL
   table(:my_model)
   attributes(
