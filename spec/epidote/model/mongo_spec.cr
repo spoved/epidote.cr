@@ -824,16 +824,30 @@ describe Epidote::Model::Mongo do
         MyModel::Mongo.size.should eq 2
       end
 
-      it "limits and offsets" do
-        MyModel::Mongo.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
-        MyModel::Mongo.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
-        res = MyModel::Mongo.all(limit: 1)
-        res.size.should eq 1
-        res.first.name.should eq "my_name"
+      describe "limits and offsets" do
+        it "#all" do
+          MyModel::Mongo.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+          MyModel::Mongo.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+          res = MyModel::Mongo.all(limit: 1)
+          res.size.should eq 1
+          res.first.name.should eq "my_name"
 
-        res = MyModel::Mongo.all(limit: 1, offset: 1)
-        res.size.should eq 1
-        res.first.name.should eq "my_other_name"
+          res = MyModel::Mongo.all(limit: 1, offset: 1)
+          res.size.should eq 1
+          res.first.name.should eq "my_other_name"
+        end
+
+        it "#query" do
+          MyModel::Mongo.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+          MyModel::Mongo.new(name: "my_other_name", unique_name: UUID.random.to_s, not_nil_value: 1).save!
+          res = MyModel::Mongo.query(limit: 1)
+          res.size.should eq 1
+          res.first.name.should eq "my_name"
+
+          res = MyModel::Mongo.query(limit: 1, offset: 1)
+          res.size.should eq 1
+          res.first.name.should eq "my_other_name"
+        end
       end
 
       it "#each" do

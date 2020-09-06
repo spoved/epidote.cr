@@ -85,7 +85,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               {% for name, typ in ATTR_TYPES %}
               when {{name.id.stringify}}
 
-                  {% meth = @type.methods.select {|m| m.name == name}.first %}
+                  # Check to see if we have a converter provided. if so, use that instead.
+                  {% meth = @type.methods.select { |m| m.name == name }.first %}
                   {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
                     {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
                     {% if anno && anno.named_args[:converter] %}
@@ -93,6 +94,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                     {% end %}
                   {% else %}
 
+                  # Since no converter was provided we need to try to match the BSON type 
+                  # return to target return and do any needed coversions
 
                   if %value.is_a?({{typ.id}})
                     new_ob.{{name.id}} = %value
@@ -112,7 +115,6 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                         {% end %}
                       else
 
-         
                           {% if typ.resolve <= BSON::Serializable || typ.resolve.class.has_method? :from_bson %}
                             new_ob.{{name.id}} = {{typ.id}}.from_bson %value
                           {% else %}
