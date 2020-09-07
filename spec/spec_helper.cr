@@ -7,7 +7,7 @@ require "../src/epidote"
 require "./fixtures"
 
 Spec.before_suite {
-  spoved_logger :trace, bind: true
+  # spoved_logger :trace, bind: true
 }
 
 def invalid_mongo_model

@@ -172,9 +172,10 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
             {% for name, val in ATTR_TYPES %}
               {% if val.id == "String" %}
-                unless {{name.id}}_like.nil? 
+                unless {{name.id}}_like.nil?
+                  %val = {{name.id}}_like
                   %query[{{name.id.stringify}}] = {
-                    "$regex" => "/.*#{{{name.id}}_like.gsub('/', "\/")}.*/i"
+                    "$regex" => "(?-i).*#{%val}.*",
                   }
                 end
               {% end %}

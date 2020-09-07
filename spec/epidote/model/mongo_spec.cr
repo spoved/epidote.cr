@@ -805,7 +805,7 @@ describe Epidote::Model::Mongo do
           end
         end
 
-        it "with name_like defined", focus: true do
+        it "with name_like defined" do
           items = Array(MyModel::Mongo).new
           5.times do
             items << MyModel::Mongo.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: 12).save!
