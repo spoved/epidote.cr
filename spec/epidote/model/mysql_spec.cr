@@ -812,7 +812,6 @@ describe Epidote::Model::MySQL do
 
         pending "with no matching attributes" do
         end
-
       end
 
       it "#all" do

@@ -155,11 +155,36 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             {% for name, val in ATTR_TYPES %}
               {{name.id}} : {{val}}? = nil,
             {% end %}
+
+            {% for name, val in ATTR_TYPES %}
+              {% if val.id == "String" %}
+              {{name.id}}_like : {{val}}? = nil,
+              {% end %}
+            {% end %}
+
+            index_contains : String? = nil,
           )
-            %query = Hash(String, ValTypes).new
+            %query = Hash(String, ValTypes | Hash(String, String)).new
             {% for name, type in ATTR_TYPES %}
             %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
             {% end %}
+
+
+            {% for name, val in ATTR_TYPES %}
+              {% if val.id == "String" %}
+                unless {{name.id}}_like.nil? 
+                  %query[{{name.id.stringify}}] = {
+                    "$regex" => ".*#{{{name.id}}_like}.*"
+                  }
+                end
+              {% end %}
+            {% end %}
+
+
+            unless index_contains.nil? 
+              %query["$text"] = { "$search" =>  index_contains }
+            end
+
             %query
           end
 
