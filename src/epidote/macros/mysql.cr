@@ -139,6 +139,12 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% for name, val in ATTR_TYPES %}
                 {{name.id}} : {{val}}? = nil,
               {% end %}
+              
+              {% for name, val in ATTR_TYPES %}
+                {% if val.id == "String" %}
+                {{name.id}}_like : {{val}}? = nil,
+                {% end %}
+              {% end %}
           ) : String
 
             where = String.build do |io|
@@ -158,6 +164,16 @@ abstract class Epidote::Model::MySQL < Epidote::Model
                 {% end %}
                   io << " AND "
                 end
+              {% end %}
+
+              {% for name, val in ATTR_TYPES %}
+                {% if val.id == "String" %}
+                  if !{{name.id}}_like.nil? 
+                    io << "`{{name.id}}` like "
+                    io << '"' << '%' << {{name.id}}_like.to_s.gsub(SUBS) << '%' << '"'
+                    io << " AND "
+                  end
+                {% end %}
               {% end %}
             end
             where.empty? ? where : "WHERE #{where.chomp(" AND ")}"

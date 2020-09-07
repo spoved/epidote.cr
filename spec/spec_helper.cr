@@ -6,6 +6,11 @@ require "../src/epidote"
 
 require "./fixtures"
 
+Spec.before_suite {
+  # spoved_logger :trace, bind: true
+}
+
+
 def invalid_mongo_model
   model = MyModel::Mongo.new(id: BSON::ObjectId.new, name: "my_name", unique_name: UUID.random.to_s)
   model.valid?.should be_false

@@ -173,8 +173,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             results = Array({{@type}}).new
 
             with_collection do |col|
-              res = col.find(%query, limit: (limit <= 0 ? nil : limit), skip: (offset <= 0 ? nil : offset) )
               logger.debug { "query: #{%query}" }
+              res = col.find(%query, limit: (limit <= 0 ? nil : limit), skip: (offset <= 0 ? nil : offset) )
               res.each do |r|
                 results << from_bson(r)
               end

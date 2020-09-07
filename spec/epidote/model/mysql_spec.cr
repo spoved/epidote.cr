@@ -793,11 +793,26 @@ describe Epidote::Model::MySQL do
           end
         end
 
+        it "with name_like defined" do
+          items = Array(MyModel::MySQL).new
+          5.times do
+            items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: 12).save!
+          end
+
+          results = MyModel::MySQL.query(name_like: "query")
+          results.should_not be_nil
+          results.size.should eq 5
+          items.each do |r|
+            results.should contain r
+          end
+        end
+
         pending "with partial matching attributes" do
         end
 
         pending "with no matching attributes" do
         end
+
       end
 
       it "#all" do
