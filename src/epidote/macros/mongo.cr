@@ -174,7 +174,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               {% if val.id == "String" %}
                 unless {{name.id}}_like.nil? 
                   %query[{{name.id.stringify}}] = {
-                    "$regex" => ".*#{{{name.id}}_like}.*"
+                    "$regex" => "/.*#{{{name.id}}_like.gsub('/', "\/")}.*/i"
                   }
                 end
               {% end %}
