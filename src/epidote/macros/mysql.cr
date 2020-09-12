@@ -139,7 +139,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% for name, val in ATTR_TYPES %}
                 {{name.id}} : {{val}}? = nil,
               {% end %}
-              
+
               {% for name, val in ATTR_TYPES %}
                 {% if val.id == "String" %}
                 {{name.id}}_like : {{val}}? = nil,

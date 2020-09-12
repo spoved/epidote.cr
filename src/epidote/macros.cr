@@ -210,6 +210,10 @@ abstract class Epidote::Model
             ATTR_NAMES
           end
 
+          def self.attr_types
+            ATTR_TYPES
+          end
+
           # Return an array containing all of the `{{@type}}` records
           def self.all(limit : Int32 = 0, offset : Int32 = 0,) : Array({{@type}})
             self._query_all(limit: limit, offset: offset)
