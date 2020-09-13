@@ -175,7 +175,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                 unless {{name.id}}_like.nil?
                   %val = {{name.id}}_like
                   %query[{{name.id.stringify}}] = {
-                    "$regex" => "(?-i).*#{%val}.*",
+                    "$regex" => %val,
+                    "$options" : "i",
                   }
                 end
               {% end %}
@@ -202,7 +203,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               logger.debug { "query: #{%query}" }
               res = col.find(%query, limit: (limit <= 0 ? nil : limit), skip: (offset <= 0 ? nil : offset) )
               res.each do |r|
-                results << from_bson(r)
+                results << from_bson(r).mark_saved.mark_clean
               end
             end
 
@@ -218,7 +219,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             with_collection do |col|
               bson = col.find_one({"_id" => id})
               logger.debug { "find: id: #{id.to_s} returned: #{bson.to_json}" }
-              result = from_bson(bson) unless bson.nil?
+              result = from_bson(bson).mark_saved.mark_clean unless bson.nil?
             end
             result
           rescue ex
