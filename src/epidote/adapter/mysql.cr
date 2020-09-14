@@ -5,10 +5,10 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   alias DataHash = Hash(String, Array(JSON::Any) | Bool | Float64 | Hash(String, JSON::Any) | Int64 | String | Nil)
 
   OPTIONS = HTTP::Params.new({
-    "retry_attempts"     => ["8"],
-    "retry_delay"        => ["3"],
-    "max_pool_size"      => ["2"],
-    "max_idle_pool_size" => ["0"],
+    "retry_attempts"     => [ENV.fetch("MYSQL_DB_RETRY_ATTEMPTS", "8")],
+    "retry_delay"        => [ENV.fetch("MYSQL_DB_RETRY_DELAY", "3")],
+    "max_pool_size"      => [ENV.fetch("MYSQL_DB_MAX_POOL_SIZE", "5")],
+    "max_idle_pool_size" => [ENV.fetch("MYSQL_DB_IDLE_POOL_SIZE", "0")],
   })
 
   MYSQL_DB_NAME = ENV["CRYSTAL_ENV"]? ? "#{ENV["MYSQL_DB_NAME"]}_#{ENV["CRYSTAL_ENV"]?}" : "#{ENV["MYSQL_DB_NAME"]}"
