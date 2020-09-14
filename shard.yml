@@ -11,7 +11,6 @@ license: MIT
 dependencies:
   spoved:
     github: spoved/spoved.cr
-    version: ">= 0.3.2"
   cryomongo:
     github: elbywan/cryomongo
   mysql:
