@@ -94,12 +94,12 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     client.exec("drop schema if exists `#{database_name}`")
   end
 
-  def self.with_rw_database(&block : ::DB::Connection -> Nil)
-    client.using_connection(&block)
+  def self.with_rw_database(&block : ::DB::Database -> Nil)
+    yield client
   end
 
-  def self.with_ro_database(&block : ::DB::Connection -> Nil)
-    client_ro.using_connection(&block)
+  def self.with_ro_database(&block : ::DB::Database -> Nil)
+    yield client_ro
   end
 end
 
