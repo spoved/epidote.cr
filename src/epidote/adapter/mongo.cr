@@ -32,7 +32,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     ::Mongo::Client.new(uri, ::Mongo::Options.new(auth_mechanism: "SCRAM-SHA-1"))
   end
 
-  def self.client : ::Mongo::Client
+  protected def self.client : ::Mongo::Client
     unless @@client
       @@_mutex.synchronize do
         @@client = self.new_client(client_uri.to_s)
@@ -41,7 +41,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
     @@client.not_nil!
   end
 
-  def self.client_ro : ::Mongo::Client
+  protected def self.client_ro : ::Mongo::Client
     unless @@client_ro
       @@_mutex.synchronize do
         @@client_ro = client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
