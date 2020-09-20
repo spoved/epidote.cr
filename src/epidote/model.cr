@@ -106,7 +106,7 @@ abstract class Epidote::Model
   def save
     self.save!
   rescue ex
-    logger.error { ex }
+    logger.error(exception: ex) { ex }
     self
   end
 
@@ -136,7 +136,7 @@ abstract class Epidote::Model
   def destroy : Nil
     self.destroy!
   rescue ex
-    logger.error { ex }
+    logger.error(exception: ex) { ex }
   end
 
   # This will update the record with any changes made to the instance. Raises any errors encountered
@@ -152,7 +152,7 @@ abstract class Epidote::Model
 
     raise Epidote::Error::MissingRecord.new unless saved?
     self.valid!
-    logger.trace { "updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
+    logger.trace { "[#{Fiber.current.name}] updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
 
     self._update_record
     self.mark_clean
@@ -172,7 +172,7 @@ abstract class Epidote::Model
   def update
     self.update!
   rescue ex
-    logger.error { ex }
+    logger.error(exception: ex) { "[#{Fiber.current.name}] #{ex.message}" }
     self
   end
 end

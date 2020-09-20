@@ -32,7 +32,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
     macro finished
       {% verbatim do %}
         {% begin %}
-
+          {% converters = {} of SymbolLiteral => Path %}
           def self.drop
             logger.warn { "dropping collection: #{COLLECTION}"}
             adapter.with_database do |db|
@@ -90,11 +90,12 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                   {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
                     {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
                     {% if anno && anno.named_args[:converter] %}
+                    {% converters[name] = anno.named_args[:converter] %}
                     new_ob.{{name.id}} = {{anno.named_args[:converter]}}.from_bson %value
                     {% end %}
                   {% else %}
 
-                  # Since no converter was provided we need to try to match the BSON type 
+                  # Since no converter was provided we need to try to match the BSON type
                   # return to target return and do any needed coversions
 
                   if %value.is_a?({{typ.id}})
@@ -103,7 +104,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
                       case %value
                       when String
                         {% if typ.id == "UUID" %}
-                        new_ob.{{name.id}} = UUID.new(%value) 
+                        new_ob.{{name.id}} = UUID.new(%value)
                         {% else %}
                         raise "Unable to set value {{name.id}} for type {{typ.id}} value is a: #{%value.class}"
                         {% end %}
@@ -151,7 +152,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             end
           end
 
-          def self._where_query(           
+          def self._where_query(
             {% for name, val in ATTR_TYPES %}
               {{name.id}} : {{val}}? = nil,
             {% end %}
@@ -166,7 +167,11 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           )
             %query = Hash(String, ValTypes | Hash(String, String)).new
             {% for name, type in ATTR_TYPES %}
-            %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
+            {% if converters[name] %}
+              %query[{{name.id.stringify}}] = {{converters[name]}}.to_bson({{name.id}}) unless {{name.id}}.nil?
+            {% else %}
+              %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
+            {% end %}
             {% end %}
 
 
@@ -183,7 +188,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             {% end %}
 
 
-            unless index_contains.nil? 
+            unless index_contains.nil?
               %query["$text"] = { "$search" =>  index_contains }
             end
 

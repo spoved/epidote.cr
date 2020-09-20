@@ -135,7 +135,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             '"'  => "\\\"",
           }
 
-          def self._where_query(           
+          def self._where_query(
               {% for name, val in ATTR_TYPES %}
                 {{name.id}} : {{val}}? = nil,
               {% end %}
@@ -168,7 +168,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
               {% for name, val in ATTR_TYPES %}
                 {% if val.id == "String" %}
-                  if !{{name.id}}_like.nil? 
+                  if !{{name.id}}_like.nil?
                     io << "`{{name.id}}` like "
                     io << '"' << '%' << {{name.id}}_like.to_s.gsub(SUBS) << '%' << '"'
                     io << " AND "
@@ -186,8 +186,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           )
 
             where = _where_query(**args)
-
-            logger.trace {  }
             self._query_all(limit, offset, where)
           end
 
@@ -195,7 +193,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-            logger.trace { "_delete_record: #{sql}"}
+            logger.trace { "[#{Fiber.current.name}] _delete_record: #{sql}"}
             adapter.with_rw_database do |conn|
               conn.exec(sql, self.primary_key_val)
             end
@@ -205,7 +203,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             %cols = {{@type}}.attributes.map {|x| "`#{x}` = ?"}
 
             sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
-            logger.trace { "_insert_record: #{sql}"}
+            logger.trace { "[#{Fiber.current.name}] _insert_record: #{sql}"}
 
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
@@ -233,7 +231,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
 
-            logger.trace { "_update_record: #{sql}"}
+            logger.trace { "[#{Fiber.current.name}] _update_record: #{sql}"}
             adapter.with_rw_database do |conn|
               conn.exec(sql,
                 {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}

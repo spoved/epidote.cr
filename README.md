@@ -93,6 +93,17 @@ MYSQL_PASS=mysql
 MYSQL_DB_NAME=epidote_test
 ```
 
+The MySQL pool configuration can be passed with environmentals as well:
+
+```text
+MYSQL_DB_INITIAL_POOL_SIZE=1
+MYSQL_DB_MAX_POOL_SIZE=25
+MYSQL_DB_IDLE_POOL_SIZE=5
+MYSQL_DB_CHECKOUT_TIMEOUT=10.0
+MYSQL_DB_RETRY_ATTEMPTS=2
+MYSQL_DB_RETRY_DELAY=0.2
+```
+
 ### MongoDB example
 
 ```crystal

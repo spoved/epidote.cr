@@ -20,17 +20,17 @@ abstract class Epidote::Model::MySQL < Epidote::Model
   def self.first
     _query_all(limit: 1)[0]?
   rescue ex
-    logger.error { ex }
+    logger.error(exception: ex) { ex }
     nil
   end
 
   def self.drop
-    logger.warn { "dropping table: #{table_name}" }
+    logger.warn { "[#{Fiber.current.name}] dropping table: #{table_name}" }
     adapter.client.exec("DROP TABLE `#{table_name}`")
   end
 
   def self.truncate
-    logger.warn { "truncating table: #{table_name}" }
+    logger.warn { "[#{Fiber.current.name}] truncating table: #{table_name}" }
     adapter.client.exec("TRUNCATE TABLE `#{table_name}`")
   end
 

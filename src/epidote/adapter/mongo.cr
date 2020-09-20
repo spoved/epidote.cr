@@ -24,30 +24,45 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
   @@client : ::Mongo::Client? = nil
   @@client_ro : ::Mongo::Client? = nil
 
+  # :nodoc:
+  @@_mutex = Mutex.new
+
   private def self.new_client(uri)
-    logger.info { "creating new mongo client" }
+    logger.info { "[#{Fiber.current.name}] creating new mongo client" }
     ::Mongo::Client.new(uri, ::Mongo::Options.new(auth_mechanism: "SCRAM-SHA-1"))
   end
 
   def self.client : ::Mongo::Client
-    @@client ||= self.new_client(client_uri.to_s)
+    unless @@client
+      @@_mutex.synchronize do
+        @@client = self.new_client(client_uri.to_s)
+      end
+    end
+    @@client.not_nil!
   end
 
   def self.client_ro : ::Mongo::Client
-    @@client_ro ||= client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
+    unless @@client_ro
+      @@_mutex.synchronize do
+        @@client_ro = client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
+      end
+    end
+    @@client_ro.not_nil!
   end
 
   def self.close
-    unless @@client.nil?
-      logger.debug { "closing mongo client" }
-      @@client.not_nil!.close
-      @@client = nil
-    end
+    @@_mutex.synchronize do
+      unless @@client.nil?
+        logger.debug { "[#{Fiber.current.name}] closing mongo client" }
+        @@client.not_nil!.close
+        @@client = nil
+      end
 
-    unless @@client_ro.nil?
-      logger.debug { "closing mongo RO client" }
-      @@client_ro.not_nil!.close
-      @@client_ro = nil
+      unless @@client_ro.nil?
+        logger.debug { "[#{Fiber.current.name}] closing mongo RO client" }
+        @@client_ro.not_nil!.close
+        @@client_ro = nil
+      end
     end
   end
 
@@ -70,7 +85,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
   protected def self.with_database(&block : ::Mongo::Database -> Nil) : Nil
     yield client[self.database_name]
   rescue ex
-    logger.error(exception: ex) { "with_database: #{ex.message}" }
+    logger.error(exception: ex) { "[#{Fiber.current.name}] with_database: #{ex.message}" }
     logger.trace { ex.backtrace }
     raise ex
   end
@@ -80,7 +95,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
       yield db[collection]
     end
   rescue ex
-    logger.error(exception: ex) { "with_collection: #{ex.message}" }
+    logger.error(exception: ex) { "[#{Fiber.current.name}] with_collection: #{ex.message}" }
     logger.trace { ex.backtrace }
     raise ex
   end

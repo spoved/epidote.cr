@@ -48,8 +48,8 @@ abstract class Epidote::Model
   macro attributes(**args)
     {% for key, val in args %}
       {% if val.is_a?(NamedTupleLiteral) %}
-      attribute( 
-        name: {{key}}, 
+      attribute(
+        name: {{key}},
         {% for k, v in val %}
         {{k}}: {{v}},
         {% end %}
