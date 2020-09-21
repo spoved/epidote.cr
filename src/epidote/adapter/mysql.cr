@@ -40,6 +40,8 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
 
   # :nodoc:
   @@_mutex = Mutex.new
+  # :nodoc:
+  @@_ro_mutex = Mutex.new
 
   private def self.new_client(uri)
     logger.info { "[#{Fiber.current.name}] creating new MySQL client" }
@@ -58,7 +60,7 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
 
   protected def self.client_ro : ::DB::Database
     unless @@client_ro
-      @@_mutex.synchronize do
+      @@_ro_mutex.synchronize do
         @@client_ro = client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
       end
     end

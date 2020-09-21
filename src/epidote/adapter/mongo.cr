@@ -26,6 +26,8 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
 
   # :nodoc:
   @@_mutex = Mutex.new
+  # :nodoc:
+  @@_ro_mutex = Mutex.new
 
   private def self.new_client(uri)
     logger.info { "[#{Fiber.current.name}] creating new mongo client" }
@@ -43,7 +45,7 @@ class Epidote::Adapter::Mongo < Epidote::Adapter
 
   protected def self.client_ro : ::Mongo::Client
     unless @@client_ro
-      @@_mutex.synchronize do
+      @@_ro_mutex.synchronize do
         @@client_ro = client_uri != client_ro_uri ? self.new_client(client_ro_uri.to_s) : client
       end
     end
