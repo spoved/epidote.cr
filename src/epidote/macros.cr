@@ -2,6 +2,14 @@ require "spoved/logger"
 require "json"
 
 abstract class Epidote::Model
+  @@order_by : Array(String) = Array(String).new
+
+  macro order_by(*args)
+    {% for col in args %}
+    @@order_by << {{col.id.stringify}}
+    {% end %}
+  end
+
   macro attribute(name, type, **options)
 
     {% if options[:converter] %}

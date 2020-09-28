@@ -104,13 +104,13 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     tmp_uri = client_uri.dup
     tmp_uri.path = ""
     tmp_client = new_client(tmp_uri.to_s)
-    tmp_client.exec("[#{Fiber.current.name}] create schema if not exists `#{database_name}`")
+    tmp_client.exec("create schema if not exists `#{database_name}`")
     tmp_client.close
   end
 
   def self.drop_database
     logger.warn { "[#{Fiber.current.name}] dropping schema #{database_name}" }
-    client.exec("[#{Fiber.current.name}] drop schema if exists `#{database_name}`")
+    client.exec("drop schema if exists `#{database_name}`")
   end
 
   def self.with_rw_database(&block : ::DB::Connection -> Nil)

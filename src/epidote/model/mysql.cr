@@ -20,7 +20,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
   def self.first
     _query_all(limit: 1)[0]?
   rescue ex
-    logger.error(exception: ex) { ex }
+    logger.error(exception: ex) { "[#{Fiber.current.name}] #{ex.message}" }
     nil
   end
 

@@ -34,7 +34,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
         {% begin %}
           {% converters = {} of SymbolLiteral => Path %}
           def self.drop
-            logger.warn { "dropping collection: #{COLLECTION}"}
+            logger.warn { "[#{Fiber.current.name}] dropping collection: #{COLLECTION}"}
             adapter.with_database do |db|
 
               db.client.command(::Mongo::Commands::Drop, database: db.name, name: COLLECTION) if db.has_collection?(COLLECTION)
@@ -42,16 +42,16 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           def self.init_collection!(options : BSON? = nil)
-            logger.warn { "initializing collection: #{COLLECTION}"}
+            logger.warn { "[#{Fiber.current.name}] initializing collection: #{COLLECTION}"}
 
             adapter.with_database do |db|
               if db.has_collection?(COLLECTION)
                 raise Epidote::Error.new("Collection #{COLLECTION} already exists")
               else
-                logger.debug { "creating collection: #{COLLECTION}" }
+                logger.debug { "[#{Fiber.current.name}] creating collection: #{COLLECTION}" }
                 db.client.command(::Mongo::Commands::Create, database: db.name, name: COLLECTION, options: options)
 
-                logger.debug { "adding indexes to collection: #{COLLECTION}" }
+                logger.debug { "[#{Fiber.current.name}] adding indexes to collection: #{COLLECTION}" }
                 adapter.with_collection(COLLECTION) do |coll|
                   INDEXES.each do |index, opts|
                     coll.create_index(index, options: opts)
@@ -133,7 +133,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           end
 
           private def self._query_all(query : BSON = BSON.new, limit : Int32 = 0, offset : Int32 = 0)
-            logger.trace { "querying all records"}
+            logger.trace { "[#{Fiber.current.name}] querying all records"}
 
             results = [] of {{@type}}
             with_collection do |coll|
@@ -214,7 +214,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
             results
           rescue ex
-            logger.error(exception: ex) { "Error when trying to locate record: #{args.to_s}" }
+            logger.error(exception: ex) { "[#{Fiber.current.name}] Error when trying to locate record: #{args.to_s}" }
             Array({{@type}}).new
           end
 
@@ -228,7 +228,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             end
             result
           rescue ex
-            logger.error(exception: ex) { "Error when trying to locate record with id: #{id.to_s}" }
+            logger.error(exception: ex) { "[#{Fiber.current.name}] Error when trying to locate record with id: #{id.to_s}" }
             nil
           end
 
@@ -256,7 +256,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               r = coll.insert_one(doc)
               if !r.nil? && r.n == 1
                 %id = doc["_id"].to_s.chomp('\u0000')
-                logger.trace { "created record #{%id}" }
+                logger.trace { "[#{Fiber.current.name}] created record #{%id}" }
               end
             end
           end

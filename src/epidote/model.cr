@@ -87,7 +87,7 @@ abstract class Epidote::Model
     self.valid!
     raise Epidote::Error::ExistingRecord.new("record already exists!") if self.saved?
 
-    logger.trace { "inserting record: #{self}" }
+    logger.trace { "[#{Fiber.current.name}] inserting record: #{self}" }
     self._insert_record
     self.mark_saved
     self.mark_clean
@@ -119,7 +119,7 @@ abstract class Epidote::Model
   # ```
   def destroy! : Nil
     raise Epidote::Error::MissingRecord.new unless saved?
-    logger.trace { "deleting record: #{self.primary_key_val.to_s}" }
+    logger.trace { "[#{Fiber.current.name}] deleting record: #{self.primary_key_val.to_s}" }
 
     self._delete_record
     self.saved = false

@@ -83,7 +83,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
             logger.trace { "querying all records"}
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where} #{_limit_query(limit, offset)}"
-
+            sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
             logger.trace { "_query_all: #{sql}"}
 
             results : Array({{@type}}) = Array({{@type}}).new
@@ -96,6 +96,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           def self.each(where = "", &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
+            sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
             logger.trace { "each: #{sql}"}
 
             adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|
