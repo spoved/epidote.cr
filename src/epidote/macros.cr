@@ -90,13 +90,15 @@ abstract class Epidote::Model
   macro _commit_hooks
     {% verbatim do %}
       macro pre_commit(meth)
-        protected def _pre_commit_hook
+        @[Epidote::DB::Model::PreCommit]
+        protected def %meth_name
           {{meth.body}}
         end
       end
 
       macro post_commit(meth)
-        protected def _post_commit_hook
+        @[Epidote::DB::Model::PostCommit]
+        protected def %meth_name
           {{meth.body}}
         end
       end
@@ -298,6 +300,22 @@ abstract class Epidote::Model
               hash[k.to_s] = get(k)
             end
             hash
+          end
+
+          def _pre_commit_hook
+            {% for meth in @type.methods %}
+              {% if meth.annotation(::Epidote::DB::Model::PreCommit) %}
+                {{meth.name.id}}
+              {% end %}
+            {% end %}
+          end
+
+          def _post_commit_hook
+            {% for meth in @type.methods %}
+              {% if meth.annotation(::Epidote::DB::Model::PostCommit) %}
+                {{meth.name.id}}
+              {% end %}
+            {% end %}
           end
         {% end %}
       {% end %}

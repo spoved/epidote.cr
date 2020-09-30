@@ -62,9 +62,9 @@ abstract class Epidote::Model
     self
   end
 
-  protected def _pre_commit_hook; end
+  abstract def _pre_commit_hook
 
-  protected def _post_commit_hook; end
+  abstract def _post_commit_hook
 
   def self.create(**args)
     new(**args).save
