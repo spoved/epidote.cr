@@ -21,10 +21,17 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: mysql
       MYSQL_DATABASE: epidote_test
-    volumes: 
-      - ./spec/mysql:/docker-entrypoint-initdb.d/
+    volumes:
+      - ./spec/fixtures/db/mysql:/docker-entrypoint-initdb.d/
     ports:
       - 3306:3306
+  cassandra:
+    image: bitnami/cassandra:3.11.8-debian-10-r20
+    volumes:
+      - ./spec/fixtures/db/cassandra/config.yaml:/bitnami/cassandra/conf/cassandra.yaml:ro
+      - ./spec/fixtures/db/cassandra/seed.cql:/docker-entrypoint-initdb.d/seed.cql
+    ports:
+      - 9042:9042
   test:
     build: .
     environment:
@@ -47,4 +54,4 @@ services:
     command:
       - /bin/sh
       - -c
-      - "shards && crystal spec -v --error-trace" 
+      - "shards && crystal spec -v --error-trace"

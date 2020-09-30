@@ -18,6 +18,11 @@ dependencies:
     # github: crystal-lang/crystal-mysql
     github: kalinon/crystal-mysql
     branch: add-uuid-support
+  cassandra:
+    # github: kaukas/crystal-cassandra
+    github: kalinon/crystal-cassandra
+    branch: 0.35.1-update
+
 development_dependencies:
   ameba:
     github: veelenga/ameba
