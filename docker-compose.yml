@@ -28,7 +28,7 @@ services:
   cassandra:
     image: bitnami/cassandra:3.11.8-debian-10-r20
     volumes:
-      - ./spec/fixtures/db/cassandra/config.yaml:/bitnami/cassandra/conf/cassandra.yaml:ro
+      # - ./spec/fixtures/db/cassandra/config.yaml:/bitnami/cassandra/conf/cassandra.yaml:ro
       - ./spec/fixtures/db/cassandra/seed.cql:/docker-entrypoint-initdb.d/seed.cql
     ports:
       - 9042:9042

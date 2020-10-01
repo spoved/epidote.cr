@@ -41,7 +41,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% if val.id == "JSON::Any" %}
                 {{name.id}}: String?,
               {% else %}
-                {{name.id}}: {{val.id}},
+                {{name.id}}: ::{{val.id.gsub(/^::/, "")}},
               {% end %}
             {% end %}
           }
@@ -62,7 +62,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% if val.id == "JSON::Any" %}
                 {{name.id}}: String?,
               {% else %}
-                {{name.id}}: {{val.id}},
+                {{name.id}}: ::{{val.id.gsub(/^::/, "")}},
               {% end %}
             {% end %}
           )
@@ -88,7 +88,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
             results : Array({{@type}}) = Array({{@type}}).new
             adapter.with_ro_database do |client_ro|
-              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
+              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean.as({{@type}}) }
             end
             results
           end
@@ -100,7 +100,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             logger.trace { "each: #{sql}"}
 
             adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|
-              block.call self.from_named_truple(r).mark_saved.mark_clean
+              block.call self.from_named_truple(r).mark_saved.mark_clean.as({{@type}})
             end
           end
 
@@ -111,7 +111,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             item : {{@type}}? = nil
             adapter.with_ro_database do |client_ro|
               resp = client_ro.query_one(sql, id, as: RES_STRUCTURE)
-              item = self.from_named_truple(resp).mark_saved.mark_clean
+              item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
             end
             item
           rescue ex : DB::NoResultsError
@@ -155,7 +155,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
                 {% if val.id == "UUID" %}
                   io << "UUID_TO_BIN('" << {{name.id}}.to_s << "')"
                 {% elsif val.id == "JSON::Any" %}
-
+                  io << '"' << {{name.id}}.to_json.gsub(SUBS) << '"'
                 {% elsif val.id == "String" %}
                   io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
                 {% elsif val.id == "Bool" %}

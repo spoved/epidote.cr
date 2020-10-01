@@ -33,3 +33,15 @@ def valid_mysql_model
   model.valid?.should be_true
   model
 end
+
+def invalid_cassandra_model
+  model = MyModel::Cassandra.new(name: "my_name", default_value: UUID.random.to_s)
+  model.valid?.should be_false
+  model
+end
+
+def valid_cassandra_model
+  model = MyModel::Cassandra.new(name: "my_name", default_value: UUID.random.to_s, not_nil_value: 1)
+  model.valid?.should be_true
+  model
+end

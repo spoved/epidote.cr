@@ -30,8 +30,8 @@ class Epidote::Adapter::Cassandra < Epidote::Adapter
     host: ENV["CASSANDRA_RO_HOST"]? || ENV["CASSANDRA_HOST"]? || "localhost",
     port: (ENV["CASSANDRA_RO_PORT"]? || ENV["CASSANDRA_PORT"]? || 9042).to_i,
     path: "" + CASSANDRA_DB_NAME,
-    user: ENV["CASSANDRA_USER"]? || "root",
-    password: ENV["CASSANDRA_PASS"]? || "",
+    user: ENV["CASSANDRA_USER"]? || "cassandra",
+    password: ENV["CASSANDRA_PASS"]? || "cassandra",
     query: OPTIONS.to_s,
   )
 
@@ -104,13 +104,13 @@ class Epidote::Adapter::Cassandra < Epidote::Adapter
     tmp_uri = client_uri.dup
     tmp_uri.path = ""
     tmp_client = new_client(tmp_uri.to_s)
-    tmp_client.exec("create keyspace if not exists `#{database_name}`")
+    tmp_client.exec("create keyspace if not exists #{database_name}")
     tmp_client.close
   end
 
   def self.drop_database
     logger.warn { "[#{Fiber.current.name}] dropping schema #{database_name}" }
-    client.exec("drop keyspace if exists exists `#{database_name}`")
+    client.exec("drop keyspace if exists exists #{database_name}")
   end
 
   def self.with_rw_database(&block : ::DB::Connection -> Nil)

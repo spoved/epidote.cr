@@ -199,10 +199,10 @@ abstract class Epidote::Model
           end
 
           # All the possible `typeof(val)` for each property
-          alias ValTypes = Nil {% for name, anno in properties %} | {{anno[:type]}} {% end %}
+          alias ValTypes = Nil {% for name, anno in properties %} | ::{{anno[:type].id.gsub(/^::/, "")}} {% end %}
 
           ATTR_TYPES = {
-            {% for name, anno in properties %} :{{ name.id }} => {{anno[:type]}}, {% end %}
+            {% for name, anno in properties %} :{{ name.id }} => ::{{anno[:type].id.gsub(/^::/, "")}}, {% end %}
           }
 
           ATTR_NAMES = [
@@ -270,7 +270,7 @@ abstract class Epidote::Model
           # Alias of each `key => typeof(val)` in a `NamedTuple`
           alias NamedVars = NamedTuple(
             {% for name, anno in properties %}
-              {{name.id}}: {{anno[:type].id}},
+              {{name.id}}: ::{{anno[:type].id.gsub(/^::/, "")}},
             {% end %}
           )
 

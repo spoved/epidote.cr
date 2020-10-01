@@ -1,4 +1,6 @@
 abstract class Epidote::Model::Cassandra < Epidote::Model
+  alias Any = ::Cassandra::DBApi::Any
+
   macro table(name)
     TABLE_NAME = {{name.id.stringify}}
     # Returns the table name this model is associated with
@@ -38,10 +40,12 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
 
           RES_STRUCTURE = {
             {% for name, val in ATTR_TYPES %}
-              {% if val.id == "JSON::Any" %}
+              {% if val.id == "UUID" %}
+                {{name.id}}: ::Cassandra::DBApi::Uuid,
+              {% elsif val.id == "JSON::Any" %}
                 {{name.id}}: String?,
               {% else %}
-                {{name.id}}: {{val.id}},
+                {{name.id}}: ::{{val.id.gsub(/^::/, "")}},
               {% end %}
             {% end %}
           }
@@ -59,10 +63,12 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           # Alias of each `key => typeof(val)` in a `NamedTuple`
           alias RespTuple = NamedTuple(
             {% for name, val in ATTR_TYPES %}
-              {% if val.id == "JSON::Any" %}
+              {% if val.id == "UUID" %}
+                {{name.id}}: ::Cassandra::DBApi::Uuid,
+              {% elsif val.id == "JSON::Any" %}
                 {{name.id}}: String?,
               {% else %}
-                {{name.id}}: {{val.id}},
+                {{name.id}}: ::{{val.id.gsub(/^::/, "")}},
               {% end %}
             {% end %}
           )
@@ -71,7 +77,9 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           protected def self.from_named_truple(res : RespTuple) : {{ @type }}
             {{@type}}.new(
               {% for name, val in ATTR_TYPES %}
-                {% if val.id == "JSON::Any" %}
+                {% if val.id == "UUID" %}
+                  {{name.id}}: UUID.new(res[:{{name.id}}].as(::Cassandra::DBApi::Uuid).to_s),
+                {% elsif val.id == "JSON::Any" %}
                   {{name.id}}: res[:{{name.id}}].nil? ? nil : JSON.parse(res[:{{name.id}}].as(String)),
                 {% else %}
                   {{name.id}}: res[:{{name.id}}],
@@ -82,36 +90,38 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
 
           private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
             logger.trace { "querying all records"}
-            sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where} #{_limit_query(limit, offset)}"
-            sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
+            sql = "SELECT #{{{@type}}.attributes.join(", ")} FROM #{self.table_name} #{where} "
+            # sql += "ORDER BY #{@@order_by.join(", ")} " if !@@order_by.empty? && !where.empty?
+            sql += _limit_query(limit, offset)
+            sql += " ALLOW FILTERING" unless where.empty?
             logger.trace { "_query_all: #{sql}"}
 
             results : Array({{@type}}) = Array({{@type}}).new
             adapter.with_ro_database do |client_ro|
-              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean }
+              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean.as({{@type}}) }
             end
             results
           end
 
 
           def self.each(where = "", &block : {{@type}} -> _)
-            sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
-            sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
+            sql = "SELECT #{{{@type}}.attributes.join(", ")} FROM #{self.table_name} #{where}"
+            # sql += " ORDER BY #{@@order_by.join(", ")}" unless @@order_by.empty?
             logger.trace { "each: #{sql}"}
 
             adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|
-              block.call self.from_named_truple(r).mark_saved.mark_clean
+              block.call self.from_named_truple(r).mark_saved.mark_clean.as({{@type}})
             end
           end
 
           def self.find(id)
-            sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ?"
+            sql = "SELECT #{{{@type}}.attributes.join(", ")} FROM #{self.table_name} "\
+              "WHERE #{{{@type}}.primary_key_name} = ?"
             logger.trace { "find: #{sql}; id: #{id}"}
             item : {{@type}}? = nil
             adapter.with_ro_database do |client_ro|
               resp = client_ro.query_one(sql, id, as: RES_STRUCTURE)
-              item = self.from_named_truple(resp).mark_saved.mark_clean
+              item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
             end
             item
           rescue ex : DB::NoResultsError
@@ -124,60 +134,44 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
             else
               String.build do |io|
                 io << "LIMIT #{limit} "
-                if offset > 0
-                  io << "OFFSET #{offset} "
-                end
+                # if offset > 0
+                #   io << "OFFSET #{offset} "
+                # end
               end
             end
           end
 
 
           SUBS = {
-            '"'  => "\\\"",
+            '\''  => "''",
           }
 
           def self._where_query(
               {% for name, val in ATTR_TYPES %}
                 {{name.id}} : {{val}}? = nil,
               {% end %}
-
-              {% for name, val in ATTR_TYPES %}
-                {% if val.id == "String" %}
-                {{name.id}}_like : {{val}}? = nil,
-                {% end %}
-              {% end %}
           ) : String
 
             where = String.build do |io|
               {% for name, val in ATTR_TYPES %}
                 unless {{name.id}}.nil?
-                  io << "`{{name.id}}` = "
+                  io << "{{name.id}} = "
                 {% if val.id == "UUID" %}
-                  io << "UUID_TO_BIN('" << {{name.id}}.to_s << "')"
+                  io << {{name.id}}.to_s
                 {% elsif val.id == "JSON::Any" %}
-
+                  io << "'" << {{name.id}}.to_json.gsub(SUBS) << "'"
                 {% elsif val.id == "String" %}
-                  io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
+                  io << "'" << {{name.id}}.to_s.gsub(SUBS) << "'"
                 {% elsif val.id == "Bool" %}
                   io << {{name.id}}.to_s
                 {% else %}
-                  io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
+                  io << {{name.id}}.to_s
                 {% end %}
                   io << " AND "
                 end
               {% end %}
-
-              {% for name, val in ATTR_TYPES %}
-                {% if val.id == "String" %}
-                  if !{{name.id}}_like.nil?
-                    io << "`{{name.id}}` like "
-                    io << '"' << '%' << {{name.id}}_like.to_s.gsub(SUBS) << '%' << '"'
-                    io << " AND "
-                  end
-                {% end %}
-              {% end %}
             end
-            where.empty? ? where : "WHERE #{where.chomp(" AND ")}"
+            where.empty? ? where : "WHERE #{where.chomp(" AND ")} "
           end
 
           def self.query(
@@ -191,8 +185,8 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           end
 
           def _delete_record
-            sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ?"
+            sql = "DELETE FROM #{ {{@type}}.table_name } "\
+              "WHERE #{{{@type}}.primary_key_name} = ?"
 
             logger.trace { "[#{Fiber.current.name}] _delete_record: #{sql}"}
             adapter.with_rw_database do |conn|
@@ -201,9 +195,9 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           end
 
           def _insert_record
-            %cols = {{@type}}.attributes.map {|x| "`#{x}` = ?"}
+            _cols = {{@type}}.attributes.map {|x| "?"}
 
-            sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
+            sql = "INSERT INTO #{ {{@type}}.table_name } (#{{{@type}}.attributes.join(", ")}) VALUES (#{_cols.join(", ")})"
             logger.trace { "[#{Fiber.current.name}] _insert_record: #{sql}"}
 
             resp : DB::ExecResult? = nil
@@ -227,10 +221,10 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           end
 
           def _update_record
-            %cols = {{@type}}.non_id_attributes.map { |x| "`#{x}` = ?" }
+            _cols = {{@type}}.non_id_attributes.map { |x| "#{x} = ?" }
 
-            sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ?"
+            sql = "UPDATE #{{{@type}}.table_name} SET #{_cols.join(", ")} "\
+              "WHERE #{{{@type}}.primary_key_name} = ?"
 
             logger.trace { "[#{Fiber.current.name}] _update_record: #{sql}"}
             adapter.with_rw_database do |conn|
