@@ -11,6 +11,7 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     "checkout_timeout"   => [ENV.fetch("MYSQL_DB_CHECKOUT_TIMEOUT", "5.0")],
     "retry_attempts"     => [ENV.fetch("MYSQL_DB_RETRY_ATTEMPTS", "1")],
     "retry_delay"        => [ENV.fetch("MYSQL_DB_RETRY_DELAY", "0.2")],
+    # "prepared_statements" => [ENV.fetch("MYSQL_DB_PREPARED_STATEMENTS", "true")],
   })
 
   MYSQL_DB_NAME = ENV["CRYSTAL_ENV"]? ? "#{ENV["MYSQL_DB_NAME"]}_#{ENV["CRYSTAL_ENV"]?}" : "#{ENV["MYSQL_DB_NAME"]}"

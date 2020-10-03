@@ -82,8 +82,11 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
             logger.trace { "querying all records"}
-            sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where} #{_limit_query(limit, offset)}"
-            sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
+            sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "
+            sql += where unless where.empty?
+            sql += " ORDER BY `#{@@order_by.join("`,`")}` " unless @@order_by.empty?
+            sql += _limit_query(limit, offset)
+
             logger.trace { "_query_all: #{sql}"}
 
             results : Array({{@type}}) = Array({{@type}}).new
@@ -190,6 +193,37 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             self._query_all(limit, offset, where)
           end
 
+          def self.bulk_create(items : Array({{@type}}))
+            if items.empty?
+              logger.trace { "[#{Fiber.current.name}] empty list passed to {{@type}}.bulk_create" }
+              return
+            end
+            %cols = {{@type}}.attributes.map {|x| "`#{x}`"}
+            %qs = "(#{%cols.map { "?" }.join(", ")})"
+            sql_build = String::Builder.new("INSERT IGNORE INTO `#{ {{@type}}.table_name }` (#{%cols.join(", ")}) VALUES ")
+
+            items.size.times do
+              sql_build << %qs << ","
+            end
+            sql = sql_build.to_s.chomp(',')
+
+            logger.trace { "[#{Fiber.current.name}] bulk_create for #{items.size}"}
+
+            %values = Array(ValTypes).new(items.size)
+            items.each do |i|
+              i._pre_commit_hook
+              {% for key in ATTR_TYPES.keys %}
+              %values << i.{{key.id}}
+              {% end %}
+            end
+
+            resp : DB::ExecResult? = nil
+            adapter.with_rw_database do |conn|
+              resp = conn.exec(sql, args: %values)
+            end
+            items.each &._post_commit_hook
+          end
+
           def _delete_record
             sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
               "WHERE `#{{{@type}}.primary_key_name}` = ?"
@@ -230,7 +264,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             %cols = {{@type}}.non_id_attributes.map { |x| "`#{x}` = ?" }
 
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ?"
+              "WHERE `#{{{@type}}.primary_key_name}` = ? "
 
             logger.trace { "[#{Fiber.current.name}] _update_record: #{sql}"}
             adapter.with_rw_database do |conn|

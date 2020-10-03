@@ -91,7 +91,6 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
             logger.trace { "querying all records"}
             sql = "SELECT #{{{@type}}.attributes.join(", ")} FROM #{self.table_name} #{where} "
-            # sql += "ORDER BY #{@@order_by.join(", ")} " if !@@order_by.empty? && !where.empty?
             sql += _limit_query(limit, offset)
             sql += " ALLOW FILTERING" unless where.empty?
             logger.trace { "_query_all: #{sql}"}
@@ -182,6 +181,38 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
 
             where = _where_query(**args)
             self._query_all(limit, offset, where)
+          end
+
+          def self.bulk_create(items : Array({{@type}}))
+            if items.empty?
+              logger.trace { "[#{Fiber.current.name}] empty list passed to {{@type}}.bulk_create" }
+              return
+            end
+
+            %cols = {{@type}}.attributes.map {|x| "`#{x}`"}
+            %qs = "(#{%cols.map { "?" }.join(", ")})"
+            sql_build = String::Builder.new("INSERT INTO #{ {{@type}}.table_name } (#{%cols.join(", ")}) VALUES ")
+
+            items.size.times do
+              sql_build << %qs << ","
+            end
+            sql = sql_build.to_s.chomp(',')
+
+            logger.trace { "[#{Fiber.current.name}] bulk_create for #{items.size}"}
+
+            %values = Array(ValTypes).new(items.size)
+            items.each do |i|
+              i._pre_commit_hook
+              {% for key in ATTR_TYPES.keys %}
+              %values << i.{{key.id}}
+              {% end %}
+            end
+
+            resp : DB::ExecResult? = nil
+            adapter.with_rw_database do |conn|
+              resp = conn.exec(sql, args: %values)
+            end
+            items.each &._post_commit_hook
           end
 
           def _delete_record
