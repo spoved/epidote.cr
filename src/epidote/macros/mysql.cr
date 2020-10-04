@@ -158,6 +158,8 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               end
             when Bool, Int32, Int64
               val.to_s
+            when Time
+             %<from_unixtime(#{val.to_unix})>
             else
               %<"#{val.to_s.gsub(SUBS)}">
             end
