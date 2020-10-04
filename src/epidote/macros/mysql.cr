@@ -151,7 +151,13 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             when JSON::Any
               %<"#{val.to_json.gsub(SUBS)}">
             when String
-              %<"#{val.to_s.gsub(SUBS)}">
+
+              if val =~ /'/
+                %<"#{val.gsub(SUBS)}">
+              else
+                %<'#{val}'>
+              end
+              %<"#{val.gsub(SUBS)}">
             when Bool
               val.to_s
             else
