@@ -182,6 +182,11 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% for name, val in ATTR_TYPES %}
                 {% if val.id == "String" %}
                 {{name.id}}_like : {{val}}? = nil,
+                {% elsif val.id == "Int32" || val.id == "Int64" %}
+                {{name.id}}_gt : {{val}}? = nil,
+                {{name.id}}_ge : {{val}}? = nil,
+                {{name.id}}_lt : {{val}}? = nil,
+                {{name.id}}_le : {{val}}? = nil,
                 {% end %}
               {% end %}
           ) : String
@@ -196,9 +201,29 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
               {% for name, val in ATTR_TYPES %}
                 {% if val.id == "String" %}
-                  if !{{name.id}}_like.nil?
+                  unless {{name.id}}_like.nil?
                     io << "`{{name.id}}` like "
                     io << '"' << '%' << {{name.id}}_like.to_s.gsub(SUBS) << '%' << '"'
+                    io << " AND "
+                  end
+                {% elsif val.id == "Int32" || val.id == "Int64" %}
+                  unless {{name.id}}_gt.nil?
+                    io << "`{{name.id}}` > #{_prep_value({{name.id}}_gt)} "
+                    io << " AND "
+                  end
+
+                  unless {{name.id}}_ge.nil?
+                    io << "`{{name.id}}` >= #{_prep_value({{name.id}}_ge)} "
+                    io << " AND "
+                  end
+
+                  unless {{name.id}}_lt.nil?
+                    io << "`{{name.id}}` < #{_prep_value({{name.id}}_lt)} "
+                    io << " AND "
+                  end
+
+                  unless {{name.id}}_le.nil?
+                    io << "`{{name.id}}` <= #{_prep_value({{name.id}}_le)} "
                     io << " AND "
                   end
                 {% end %}

@@ -821,6 +821,63 @@ describe Epidote::Model::MySQL do
           end
         end
 
+        describe "predicates" do
+          it "with not_nil_value_lt defined" do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            results = MyModel::MySQL.query(not_nil_value_lt: 3)
+            results.should_not be_nil
+            results.size.should eq 3
+            results.each do |r|
+              r.not_nil_value.should be < 3
+            end
+          end
+
+          it "with not_nil_value_gt defined" do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            results = MyModel::MySQL.query(not_nil_value_gt: 3)
+            results.should_not be_nil
+            results.size.should eq 1
+            results.each do |r|
+              r.not_nil_value.should be > 3
+            end
+          end
+
+          it "with not_nil_value_le defined" do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            results = MyModel::MySQL.query(not_nil_value_le: 3)
+            results.should_not be_nil
+            results.size.should eq 4
+            results.each do |r|
+              r.not_nil_value.should be <= 3
+            end
+          end
+
+          it "with not_nil_value_ge defined" do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            results = MyModel::MySQL.query(not_nil_value_ge: 3)
+            results.should_not be_nil
+            results.size.should eq 2
+            results.each do |r|
+              r.not_nil_value.should be >= 3
+            end
+          end
+        end
         pending "with partial matching attributes" do
         end
 
