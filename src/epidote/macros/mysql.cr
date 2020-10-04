@@ -223,6 +223,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql_build = String::Builder.new("INSERT IGNORE INTO `#{ {{@type}}.table_name }` (#{%cols.join(", ")}) VALUES ")
 
             items.each do |i|
+              i._pre_commit_hook
               sql_build << '('
               sql_build << {{@type}}.attributes.map { |a| _prep_value(i.get(a)) }.join(", ")
               sql_build << "),"
