@@ -62,20 +62,20 @@ describe Epidote::Model::MySQL do
 
   describe "can be compared" do
     it "#==" do
-      uuid = UUID.random.to_s
-      model = MyModel::MySQL.new(name: "my_name", unique_name: uuid, not_nil_value: 1)
-      other = MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1)
-      same_other = MyModel::MySQL.new(id: model.id, name: "my_name", unique_name: uuid, not_nil_value: 1)
+      uuid = UUID.random
+      model = MyModel::MySQL.new(name: "my_name", unique_name: uuid.to_s, not_nil_value: 1, uuid: uuid)
+      other = MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1, uuid: uuid)
+      same_other = MyModel::MySQL.new(id: model.id, name: "my_name", unique_name: uuid.to_s, not_nil_value: 1, uuid: uuid)
 
       model.should_not eq other
       model.should eq same_other
     end
 
     it "#===" do
-      uuid = UUID.random.to_s
-      model = MyModel::MySQL.new(name: "my_name", unique_name: uuid, not_nil_value: 1)
-      other = MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1)
-      same_other = MyModel::MySQL.new(id: model.id, name: "my_name", unique_name: uuid, not_nil_value: 1)
+      uuid = UUID.random
+      model = MyModel::MySQL.new(name: "my_name", unique_name: uuid.to_s, not_nil_value: 1, uuid: uuid)
+      other = MyModel::MySQL.new(name: "my_name", unique_name: UUID.random.to_s, not_nil_value: 1, uuid: uuid)
+      same_other = MyModel::MySQL.new(id: model.id, name: "my_name", unique_name: uuid.to_s, not_nil_value: 1, uuid: uuid)
       alias_other = model
 
       model.should be alias_other
