@@ -229,10 +229,10 @@ abstract class Epidote::Model
             self._query_all(limit: limit, offset: offset)
           end
 
-          def get(name : Symbol)
+          def get(name : Symbol | String)
             case name
             {% for name, anno in properties %}
-            when :{{name.id}}
+            when :{{name.id}}, {{name.id.stringify}}
               self.{{name.id}}
             {% end %}
             else

@@ -233,6 +233,20 @@ describe Epidote::Model::MySQL do
         results.size.should eq 1
       end
 
+      it "#bulk_create" do
+        items = Array(MyModel::MySQL).new
+        5.times do
+          items << valid_mysql_model
+        end
+
+        MyModel::MySQL.bulk_create(items)
+        records = MyModel::MySQL.all
+        records.size.should eq 5
+        items.each do |i|
+          records.should contain(i)
+        end
+      end
+
       describe "with valid attributes" do
         describe "#save" do
           it "does not raise error" do

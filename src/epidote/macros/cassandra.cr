@@ -189,28 +189,28 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
               return
             end
 
-            %cols = {{@type}}.attributes.map {|x| "`#{x}`"}
-            %qs = "(#{%cols.map { "?" }.join(", ")})"
-            sql_build = String::Builder.new("INSERT INTO #{ {{@type}}.table_name } (#{%cols.join(", ")}) VALUES ")
+            cols = {{@type}}.attributes.map {|x| "`#{x}`"}
+            qs = "(#{cols.map { "?" }.join(", ")})"
+            sql_build = String::Builder.new("INSERT INTO #{ {{@type}}.table_name } (#{cols.join(", ")}) VALUES ")
 
             items.size.times do
-              sql_build << %qs << ","
+              sql_build << qs << ","
             end
             sql = sql_build.to_s.chomp(',')
 
             logger.trace { "[#{Fiber.current.name}] bulk_create for #{items.size}"}
 
-            %values = Array(ValTypes).new(items.size)
+            values = Array(ValTypes).new(items.size)
             items.each do |i|
               i._pre_commit_hook
               {% for key in ATTR_TYPES.keys %}
-              %values << i.{{key.id}}
+              values << i.{{key.id}}
               {% end %}
             end
 
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
-              resp = conn.exec(sql, args: %values)
+              resp = conn.exec(sql, args: values)
             end
             items.each &._post_commit_hook
           end

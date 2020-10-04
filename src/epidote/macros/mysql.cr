@@ -80,6 +80,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             )
           end
 
+          # :nodoc:
           private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
             logger.trace { "querying all records"}
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "
@@ -109,11 +110,11 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           def self.find(id)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ?"
-            logger.trace { "find: #{sql}; id: #{id}"}
+              "WHERE `#{{{@type}}.primary_key_name}` = #{_prep_value(id)}"
+            logger.trace { "find: #{sql}"}
             item : {{@type}}? = nil
             adapter.with_ro_database do |client_ro|
-              resp = client_ro.query_one(sql, id, as: RES_STRUCTURE)
+              resp = client_ro.query_one(sql, as: RES_STRUCTURE)
               item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
             end
             item
@@ -121,6 +122,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             nil
           end
 
+          # :nodoc:
           def self._limit_query(limit : Int32 = 0, offset : Int32 = 0) : String
             if limit <= 0
               ""
@@ -134,11 +136,40 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             end
           end
 
-
+          # :nodoc:
           SUBS = {
             '"'  => "\\\"",
           }
 
+          # :nodoc:
+          def self._prep_value(val) : String
+            case val
+            when Nil
+              "NULL"
+            when UUID
+              "UUID_TO_BIN('#{val.to_s}')"
+            when JSON::Any
+              %<"#{val.to_json.gsub(SUBS)}">
+            when String
+              %<"#{val.to_s.gsub(SUBS)}">
+            when Bool
+              val.to_s
+            else
+              %<"#{val.to_s.gsub(SUBS)}">
+            end
+          end
+
+          # :nodoc:
+          private def _prep_value(val) : String
+            {{@type}}._prep_value(val)
+          end
+
+          # :nodoc:
+          private def _pk_select
+            "`#{{{@type}}.primary_key_name}` = #{_prep_value(primary_key_val)}"
+          end
+
+          # :nodoc:
           def self._where_query(
               {% for name, val in ATTR_TYPES %}
                 {{name.id}} : {{val}}? = nil,
@@ -154,18 +185,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             where = String.build do |io|
               {% for name, val in ATTR_TYPES %}
                 unless {{name.id}}.nil?
-                  io << "`{{name.id}}` = "
-                {% if val.id == "UUID" %}
-                  io << "UUID_TO_BIN('" << {{name.id}}.to_s << "')"
-                {% elsif val.id == "JSON::Any" %}
-                  io << '"' << {{name.id}}.to_json.gsub(SUBS) << '"'
-                {% elsif val.id == "String" %}
-                  io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
-                {% elsif val.id == "Bool" %}
-                  io << {{name.id}}.to_s
-                {% else %}
-                  io << '"' << {{name.id}}.to_s.gsub(SUBS) << '"'
-                {% end %}
+                  io << "`{{name.id}}` = " << _prep_value({{name.id}})
                   io << " AND "
                 end
               {% end %}
@@ -202,51 +222,43 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             %qs = "(#{%cols.map { "?" }.join(", ")})"
             sql_build = String::Builder.new("INSERT IGNORE INTO `#{ {{@type}}.table_name }` (#{%cols.join(", ")}) VALUES ")
 
-            items.size.times do
-              sql_build << %qs << ","
+            items.each do |i|
+              sql_build << '('
+              sql_build << {{@type}}.attributes.map { |a| _prep_value(i.get(a)) }.join(", ")
+              sql_build << "),"
             end
             sql = sql_build.to_s.chomp(',')
 
             logger.trace { "[#{Fiber.current.name}] bulk_create for #{items.size}"}
 
-            %values = Array(ValTypes).new(items.size)
-            items.each do |i|
-              i._pre_commit_hook
-              {% for key in ATTR_TYPES.keys %}
-              %values << i.{{key.id}}
-              {% end %}
-            end
-
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
-              resp = conn.exec(sql, args: %values)
+              resp = conn.exec(sql)
             end
             items.each &._post_commit_hook
           end
 
+          # :nodoc:
           def _delete_record
             sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ?"
+              "WHERE #{_pk_select}"
 
             logger.trace { "[#{Fiber.current.name}] _delete_record: #{sql}"}
             adapter.with_rw_database do |conn|
-              conn.exec(sql, self.primary_key_val)
+              conn.exec(sql)
             end
           end
 
+          # :nodoc:
           def _insert_record
-            %cols = {{@type}}.attributes.map {|x| "`#{x}` = ?"}
+            %cols = {{@type}}.attributes.map {|x| "`#{x}` = #{_prep_value(get(x))}"}
 
             sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
             logger.trace { "[#{Fiber.current.name}] _insert_record: #{sql}"}
 
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
-              resp = conn.exec(sql,
-                {% for key in ATTR_TYPES.keys %}
-                self.{{key.id}},
-                {% end %}
-              )
+              resp = conn.exec(sql)
             end
 
             {% if PRIMARY_TYPE.id == "Int32" %}
@@ -261,19 +273,14 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           def _update_record
-            %cols = {{@type}}.non_id_attributes.map { |x| "`#{x}` = ?" }
+            %cols = {{@type}}.non_id_attributes.map { |x| "`#{x}` = #{_prep_value(get(x))}" }
 
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
-              "WHERE `#{{{@type}}.primary_key_name}` = ? "
+              "WHERE #{_pk_select} "
 
             logger.trace { "[#{Fiber.current.name}] _update_record: #{sql}"}
             adapter.with_rw_database do |conn|
-              conn.exec(sql,
-                {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
-                self.{{key.id}},
-                {% end %}
-                self.primary_key_val
-              )
+              conn.exec(sql)
             end
           end
         {% end %}
