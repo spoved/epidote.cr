@@ -159,7 +159,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             when Bool, Int32, Int64
               val.to_s
             else
-              puts val.class
               %<"#{val.to_s.gsub(SUBS)}">
             end
           end
@@ -236,7 +235,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql = sql_build.to_s.chomp(',')
 
             logger.trace { "[#{Fiber.current.name}] bulk_create for #{items.size}"}
-            logger.warn {sql}
 
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
