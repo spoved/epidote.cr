@@ -15,9 +15,9 @@ dependencies:
   cryomongo:
     github: elbywan/cryomongo
   mysql:
-    # github: crystal-lang/crystal-mysql
-    github: kalinon/crystal-mysql
-    branch: add-uuid-support
+    github: crystal-lang/crystal-mysql
+    # github: kalinon/crystal-mysql
+    # branch: add-uuid-support
   cassandra:
     # github: kaukas/crystal-cassandra
     github: kalinon/crystal-cassandra
