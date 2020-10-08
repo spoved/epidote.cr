@@ -33,6 +33,7 @@ services:
     ports:
       - 9042:9042
   test:
+    image: kalinon/epidote-test:latest
     build: .
     environment:
       MONGODB_HOST: mongo

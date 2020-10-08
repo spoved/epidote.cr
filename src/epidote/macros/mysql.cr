@@ -92,7 +92,12 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
             results : Array({{@type}}) = Array({{@type}}).new
             adapter.with_ro_database do |client_ro|
-              results = client_ro.query_all(sql, as: RES_STRUCTURE).map{ |r| self.from_named_truple(r).mark_saved.mark_clean.as({{@type}}) }
+              %rs = client_ro.as(::MySql::Connection).query_all(sql, &.read(**RES_STRUCTURE).as(RespTuple))
+
+              results = %rs.map do |r|
+                %r = self.from_named_truple(r.as(RespTuple))
+                %r.mark_saved.mark_clean.as({{@type}})
+              end
             end
             results
           end
@@ -103,7 +108,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
             logger.trace { "each: #{sql}"}
 
-            adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|
+            adapter.with_ro_database &.query_all(sql, &.read(**RES_STRUCTURE).as(RespTuple)).map do |r|
               block.call self.from_named_truple(r).mark_saved.mark_clean.as({{@type}})
             end
           end
@@ -114,7 +119,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             logger.trace { "find: #{sql}"}
             item : {{@type}}? = nil
             adapter.with_ro_database do |client_ro|
-              resp = client_ro.query_one(sql, as: RES_STRUCTURE)
+              resp = client_ro.query_one sql, &.read(**RES_STRUCTURE).as(RespTuple)
               item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
             end
             item
