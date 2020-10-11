@@ -133,9 +133,9 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               ""
             else
               String.build do |io|
-                io << "LIMIT #{limit} "
+                io << " LIMIT #{limit} "
                 if offset > 0
-                  io << "OFFSET #{offset} "
+                  io << " OFFSET #{offset} "
                 end
               end
             end
