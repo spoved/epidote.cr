@@ -114,14 +114,25 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           def self.find(id)
-            sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
-              "WHERE `#{{{@type}}.primary_key_name}` = #{_prep_value(id)}"
-            logger.trace { "find: #{sql}"}
             item : {{@type}}? = nil
-            adapter.with_ro_database do |client_ro|
-              resp = client_ro.query_one sql, &.read(**RES_STRUCTURE).as(RespTuple)
-              item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
+            if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+              sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
+                "WHERE `#{{{@type}}.primary_key_name}` = ?"
+              logger.trace { "find: #{sql}"}
+              adapter.with_ro_database do |client_ro|
+                resp = client_ro.query_one sql, id, &.read(**RES_STRUCTURE).as(RespTuple)
+                item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
+              end
+            else
+              sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "\
+                "WHERE `#{{{@type}}.primary_key_name}` = #{_prep_value(id)}"
+              logger.trace { "find: #{sql}"}
+              adapter.with_ro_database do |client_ro|
+                resp = client_ro.query_one sql, &.read(**RES_STRUCTURE).as(RespTuple)
+                item = self.from_named_truple(resp).mark_saved.mark_clean.as({{@type}})
+              end
             end
+
             item
           rescue ex : DB::NoResultsError
             nil
@@ -178,6 +189,11 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           # :nodoc:
           private def _pk_select
             "`#{{{@type}}.primary_key_name}` = #{_prep_value(primary_key_val)}"
+          end
+
+          # :nodoc:
+          private def _pk_select_pstm
+            "`#{{{@type}}.primary_key_name}` = ?"
           end
 
           # :nodoc:
@@ -250,12 +266,48 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           def self.bulk_create(items : Array({{@type}}))
+            if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+              bulk_create_pstm(items)
+            else
+              bulk_create_no_pstm(items)
+            end
+          end
+
+          private def self.bulk_create_pstm(items : Array({{@type}}))
             if items.empty?
               logger.trace { "[#{Fiber.current.name}] empty list passed to {{@type}}.bulk_create" }
               return
             end
             %cols = {{@type}}.attributes.map {|x| "`#{x}`"}
             %qs = "(#{%cols.map { "?" }.join(", ")})"
+            %values = Array(ValTypes).new(items.size)
+
+            sql_build = String::Builder.new("INSERT IGNORE INTO `#{ {{@type}}.table_name }` (#{%cols.join(", ")}) VALUES ")
+
+            items.each do |i|
+              i._pre_commit_hook
+              {% for key in ATTR_TYPES.keys %}
+              %values << i.{{key.id}}
+              {% end %}
+              sql_build << %qs << ","
+            end
+            sql = sql_build.to_s.chomp(',')
+
+            logger.trace { "[#{Fiber.current.name}] bulk_create for #{items.size}"}
+
+            resp : DB::ExecResult? = nil
+            adapter.with_rw_database do |conn|
+              resp = conn.exec(sql, args: %values)
+            end
+            items.each &._post_commit_hook
+          end
+
+          private def self.bulk_create_no_pstm(items : Array({{@type}}))
+            if items.empty?
+              logger.trace { "[#{Fiber.current.name}] empty list passed to {{@type}}.bulk_create" }
+              return
+            end
+            %cols = {{@type}}.attributes.map {|x| "`#{x}`"}
             sql_build = String::Builder.new("INSERT IGNORE INTO `#{ {{@type}}.table_name }` (#{%cols.join(", ")}) VALUES ")
 
             items.each do |i|
@@ -277,25 +329,49 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           # :nodoc:
           def _delete_record
-            sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
-              "WHERE #{_pk_select}"
+            if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+              sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
+                "WHERE #{_pk_select_pstm}"
 
-            logger.trace { "[#{Fiber.current.name}] _delete_record: #{sql}"}
-            adapter.with_rw_database do |conn|
-              conn.exec(sql)
+              logger.trace { "[#{Fiber.current.name}] _delete_record: #{sql}"}
+              adapter.with_rw_database do |conn|
+                conn.exec(sql, primary_key_val)
+              end
+            else
+              sql = "DELETE FROM `#{ {{@type}}.table_name }` "\
+                "WHERE #{_pk_select}"
+
+              logger.trace { "[#{Fiber.current.name}] _delete_record: #{sql}"}
+              adapter.with_rw_database do |conn|
+                conn.exec(sql)
+              end
             end
+
           end
 
           # :nodoc:
           def _insert_record
-            %cols = {{@type}}.attributes.map {|x| "`#{x}` = #{_prep_value(get(x))}"}
+            if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+              %cols = {{@type}}.attributes.map {|x| "`#{x}` = ?"}
+            else
+              %cols = {{@type}}.attributes.map {|x| "`#{x}` = #{_prep_value(get(x))}"}
+            end
+
 
             sql = "INSERT INTO `#{ {{@type}}.table_name }` SET #{%cols.join(",")}"
             logger.trace { "[#{Fiber.current.name}] _insert_record: #{sql}"}
 
             resp : DB::ExecResult? = nil
             adapter.with_rw_database do |conn|
-              resp = conn.exec(sql)
+              if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+                resp = conn.exec(sql,
+                  {% for key in ATTR_TYPES.keys %}
+                  self.{{key.id}},
+                  {% end %}
+                )
+              else
+                resp = conn.exec(sql)
+              end
             end
 
             {% if PRIMARY_TYPE.id == "Int32" %}
@@ -310,14 +386,29 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           def _update_record
-            %cols = {{@type}}.non_id_attributes.map { |x| "`#{x}` = #{_prep_value(get(x))}" }
+
+            if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+              %cols = {{@type}}.non_id_attributes.map {|x| "`#{x}` = ?"}
+            else
+              %cols = {{@type}}.non_id_attributes.map {|x| "`#{x}` = #{_prep_value(get(x))}"}
+            end
 
             sql = "UPDATE `#{{{@type}}.table_name}` SET #{%cols.join(",")} "\
-              "WHERE #{_pk_select} "
+              "WHERE #{Epidote::Adapter::MySQL::USE_PREPARED_STMT ? _pk_select_pstm : _pk_select} "
 
             logger.trace { "[#{Fiber.current.name}] _update_record: #{sql}"}
+
             adapter.with_rw_database do |conn|
-              conn.exec(sql)
+              if Epidote::Adapter::MySQL::USE_PREPARED_STMT
+                conn.exec(sql,
+                  {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
+                  self.{{key.id}},
+                  {% end %}
+                  self.primary_key_val
+                )
+              else
+                conn.exec(sql)
+              end
             end
           end
         {% end %}

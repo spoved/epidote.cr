@@ -14,6 +14,8 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     "prepared_statements" => [ENV.fetch("MYSQL_DB_PREPARED_STATEMENTS", "true")],
   })
 
+  USE_PREPARED_STMT = ENV.fetch("MYSQL_DB_PREPARED_STATEMENTS", "true") == "true"
+
   MYSQL_DB_NAME = ENV["CRYSTAL_ENV"]? ? "#{ENV["MYSQL_DB_NAME"]}_#{ENV["CRYSTAL_ENV"]?}" : "#{ENV["MYSQL_DB_NAME"]}"
 
   MYSQL_URI = URI.new(
@@ -116,12 +118,10 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
 
   def self.with_rw_database(&block : ::DB::Connection -> Nil)
     client.using_connection(&block)
-    # yield client
   end
 
   def self.with_ro_database(&block : ::DB::Connection -> Nil)
     client_ro.using_connection(&block)
-    # yield client_ro
   end
 end
 
