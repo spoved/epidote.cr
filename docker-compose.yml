@@ -46,6 +46,8 @@ services:
       MYSQL_USER: root
       MYSQL_PASS: mysql
       MYSQL_DB_NAME: epidote_test
+      CASSANDRA_HOST: 127.0.0.1
+      CASSANDRA_DB_NAME: epidote_test
     volumes:
       - .:/app
     working_dir: /app
