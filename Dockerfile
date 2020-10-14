@@ -11,5 +11,5 @@ RUN curl -JL -o /tmp/cpp-driver-2.14.1.tar.gz 'https://github.com/datastax/cpp-d
   tar xzvf cpp-driver-2.14.1.tar.gz && \
   cd cpp-driver-2.14.1 && \
   cmake . && make install && \
-  cp /usr/local/lib/x86_64-linux-gnu/* /lib/x86_64-linux-gnu/
+  cp -r /usr/local/lib/x86_64-linux-gnu/* /lib/x86_64-linux-gnu/
 WORKDIR /app
