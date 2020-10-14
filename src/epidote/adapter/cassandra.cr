@@ -114,13 +114,15 @@ class Epidote::Adapter::Cassandra < Epidote::Adapter
   end
 
   def self.with_rw_database(&block : ::DB::Connection -> Nil)
-    client.using_connection(&block)
-    # yield client
+    client.retry do
+      client.using_connection(&block)
+    end
   end
 
   def self.with_ro_database(&block : ::DB::Connection -> Nil)
-    client_ro.using_connection(&block)
-    # yield client_ro
+    client_ro.retry do
+      client_ro.using_connection(&block)
+    end
   end
 end
 
