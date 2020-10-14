@@ -941,7 +941,7 @@ describe Epidote::Model::MySQL do
 
       describe "order_by" do
         describe "#all" do
-          it "orders by single col ASC", focus: true do
+          it "orders by single col ASC" do
             items = Array(MyModel::MySQL).new
             5.times do |i|
               items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
@@ -954,7 +954,7 @@ describe Epidote::Model::MySQL do
             end
           end
 
-          it "orders by single col DESC", focus: true do
+          it "orders by single col DESC" do
             items = Array(MyModel::MySQL).new
             5.times do |i|
               items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
@@ -969,7 +969,7 @@ describe Epidote::Model::MySQL do
         end
 
         describe "#query" do
-          it "orders by single col ASC", focus: true do
+          it "orders by single col ASC" do
             items = Array(MyModel::MySQL).new
             5.times do |i|
               items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
@@ -982,7 +982,7 @@ describe Epidote::Model::MySQL do
             end
           end
 
-          it "orders by single col DESC", focus: true do
+          it "orders by single col DESC" do
             items = Array(MyModel::MySQL).new
             5.times do |i|
               items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!

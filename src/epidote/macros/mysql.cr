@@ -92,10 +92,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "
             sql += where unless where.empty?
-            unless order_by.empty?
-              sql += " ORDER BY `#{order_by.join("`,`")}` "
-              sql += " DESC " if order_desc
-            end
+            sql += _order_query(order_by, order_desc)
             sql += _limit_query(limit, offset)
 
             logger.trace { "_query_all: #{sql}"}
@@ -115,11 +112,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
 
           def self.each(where = "", order_by = Array(String | Symbol).new, order_desc = false, &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
-
-            unless order_by.empty?
-              sql += " ORDER BY `#{order_by.join("`,`")}` "
-              sql += " DESC " if order_desc
-            end
+            sql += _order_query(order_by, order_desc)
 
             logger.trace { "each: #{sql}"}
 
@@ -164,6 +157,29 @@ abstract class Epidote::Model::MySQL < Epidote::Model
                   io << " OFFSET #{offset} "
                 end
               end
+            end
+          end
+
+          # :nodoc:
+          def self._order_query(order_by = Array(String | Symbol).new, order_desc = false)
+            if order_by.empty?
+              ""
+            else
+             q = String.build do |io|
+                io << " ORDER BY "
+                order_by.each do |col|
+                  if col =~ /(.*)\s+desc$/i
+                    io << '`' << $1 << '`' << " DESC" << ','
+                  elsif col =~ /(.*)\s+asc$/i
+                    io << '`' << $1 << '`' << " ASC" << ','
+                  else
+                    io << '`' << col << '`' << ','
+                  end
+                end
+              end
+              q = q.chomp(',')
+              q += " DESC " if order_desc && !(/DESC$/i === q)
+              q
             end
           end
 
