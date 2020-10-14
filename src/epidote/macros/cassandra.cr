@@ -105,7 +105,6 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
 
           def self.each(where = "", &block : {{@type}} -> _)
             sql = "SELECT #{{{@type}}.attributes.join(", ")} FROM #{self.table_name} #{where}"
-            # sql += " ORDER BY #{@@order_by.join(", ")}" unless @@order_by.empty?
             logger.trace { "each: #{sql}"}
 
             adapter.with_ro_database &.query_all(sql, as: RES_STRUCTURE).map do |r|

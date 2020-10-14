@@ -938,6 +938,64 @@ describe Epidote::Model::MySQL do
           res.first.name.should eq "my_other_name"
         end
       end
+
+      describe "order_by" do
+        describe "#all" do
+          it "orders by single col ASC", focus: true do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            all = MyModel::MySQL.all(order_by: [:not_nil_value])
+
+            5.times do |i|
+              all[i].not_nil_value.should eq i
+            end
+          end
+
+          it "orders by single col DESC", focus: true do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            all = MyModel::MySQL.all(order_by: [:not_nil_value], order_desc: true)
+
+            5.times do |i|
+              all[i].not_nil_value.should eq 4 - i
+            end
+          end
+        end
+
+        describe "#query" do
+          it "orders by single col ASC", focus: true do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            all = MyModel::MySQL.query(name: "query_me", order_by: [:not_nil_value])
+
+            5.times do |i|
+              all[i].not_nil_value.should eq i
+            end
+          end
+
+          it "orders by single col DESC", focus: true do
+            items = Array(MyModel::MySQL).new
+            5.times do |i|
+              items << MyModel::MySQL.new(name: "query_me", unique_name: UUID.random.to_s, not_nil_value: i).save!
+            end
+
+            all = MyModel::MySQL.query(name: "query_me", order_by: [:not_nil_value], order_desc: true)
+
+            5.times do |i|
+              all[i].not_nil_value.should eq 4 - i
+            end
+          end
+        end
+      end
     end
   end
 end

@@ -2,14 +2,6 @@ require "spoved/logger"
 require "json"
 
 abstract class Epidote::Model
-  @@order_by : Array(String) = Array(String).new
-
-  macro order_by(*args)
-    {% for col in args %}
-    @@order_by << {{col.id.stringify}}
-    {% end %}
-  end
-
   macro attribute(name, type, **options)
 
     {% if options[:converter] %}
@@ -225,7 +217,7 @@ abstract class Epidote::Model
           end
 
           # Return an array containing all of the `{{@type}}` records
-          def self.all(limit : Int32 = 0, offset : Int32 = 0,) : Array({{@type}})
+          def self.all(limit : Int32 = 0, offset : Int32 = 0) : Array({{@type}})
             self._query_all(limit: limit, offset: offset)
           end
 

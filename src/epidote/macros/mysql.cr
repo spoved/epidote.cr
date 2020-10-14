@@ -80,12 +80,22 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             )
           end
 
+          # Return an array containing all of the `{{@type}}` records
+          def self.all(limit : Int32 = 0, offset : Int32 = 0, order_by = Array(String | Symbol).new, order_desc = false) : Array({{@type}})
+            self._query_all(limit: limit, offset: offset, order_by: order_by, order_desc: order_desc)
+          end
+
           # :nodoc:
-          private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "")
+          private def self._query_all(limit : Int32 = 0, offset : Int32 = 0, where = "",
+            order_by = Array(String | Symbol).new, order_desc = false)
             logger.trace { "querying all records"}
+
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` "
             sql += where unless where.empty?
-            sql += " ORDER BY `#{@@order_by.join("`,`")}` " unless @@order_by.empty?
+            unless order_by.empty?
+              sql += " ORDER BY `#{order_by.join("`,`")}` "
+              sql += " DESC " if order_desc
+            end
             sql += _limit_query(limit, offset)
 
             logger.trace { "_query_all: #{sql}"}
@@ -103,9 +113,14 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
 
-          def self.each(where = "", &block : {{@type}} -> _)
+          def self.each(where = "", order_by = Array(String | Symbol).new, order_desc = false, &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
-            sql += " ORDER BY `#{@@order_by.join("`,`")}`" unless @@order_by.empty?
+
+            unless order_by.empty?
+              sql += " ORDER BY `#{order_by.join("`,`")}` "
+              sql += " DESC " if order_desc
+            end
+
             logger.trace { "each: #{sql}"}
 
             adapter.with_ro_database &.query_all(sql, &.read(**RES_STRUCTURE).as(RespTuple)).map do |r|
@@ -258,11 +273,19 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           def self.query(
             limit : Int32 = 0,
             offset : Int32 = 0,
+            order_by = Array(String | Symbol).new,
+            order_desc = false,
             **args,
           )
 
             where = _where_query(**args)
-            self._query_all(limit, offset, where)
+            self._query_all(
+              limit: limit,
+              offset: offset,
+              order_by: order_by,
+              order_desc: order_desc,
+              where: where,
+            )
           end
 
           def self.bulk_create(items : Array({{@type}}))

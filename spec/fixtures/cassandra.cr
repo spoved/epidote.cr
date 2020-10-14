@@ -10,6 +10,4 @@ class MyModel::Cassandra < Epidote::Model::Cassandra
   )
   attribute :default_value, String, default: "a string"
   attribute :not_nil_value, Int32, not_nil: true
-
-  order_by :uuid
 end
