@@ -54,6 +54,7 @@ services:
     depends_on:
       - mongo
       - mysql
+      - cassandra
     command:
       - /bin/sh
       - -c
