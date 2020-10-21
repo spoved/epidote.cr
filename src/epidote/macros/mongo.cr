@@ -36,7 +36,6 @@ abstract class Epidote::Model::Mongo < Epidote::Model
           def self.drop
             logger.warn { "[#{Fiber.current.name}] dropping collection: #{COLLECTION}"}
             adapter.with_database do |db|
-
               db.client.command(::Mongo::Commands::Drop, database: db.name, name: COLLECTION) if db.has_collection?(COLLECTION)
             end
           end
@@ -165,13 +164,23 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
             index_contains : String? = nil,
           )
-            %query = Hash(String, ValTypes | Hash(String, String)).new
+            %query = Hash(String, ValTypes | Hash(String, String) | Int32 | Int64 | String).new
+
             {% for name, type in ATTR_TYPES %}
-            {% if converters[name] %}
-              %query[{{name.id.stringify}}] = {{converters[name]}}.to_bson({{name.id}}) unless {{name.id}}.nil?
-            {% else %}
-              %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
-            {% end %}
+              {% if type.id =~ /Hash/ %}
+                unless {{name.id}}.nil?
+                  {{name.id}}.each do |k, v|
+                    %query["{{name.id}}.#{k}"] = v
+                  end
+                end
+              {% else %}
+                {% if converters[name] %}
+                  %query[{{name.id.stringify}}] = {{converters[name]}}.to_bson({{name.id}}) unless {{name.id}}.nil?
+                {% else %}
+                  %query[{{name.id.stringify}}] = {{name.id}} unless {{name.id}}.nil?
+                {% end %}
+              {% end %}
+
             {% end %}
 
 
