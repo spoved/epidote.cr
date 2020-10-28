@@ -21,7 +21,7 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   MYSQL_URI = URI.new(
     scheme: "mysql",
     host: ENV["MYSQL_HOST"]? || "localhost",
-    port: (ENV["MYSQL_PORT"]? || 3306).to_i,
+    port: (ENV["MYSQL_PORT"]? || "3306").to_i,
     path: "" + MYSQL_DB_NAME,
     user: ENV["MYSQL_USER"]? || "root",
     password: ENV["MYSQL_PASS"]? || "",
@@ -31,7 +31,7 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   MYSQL_RO_URI = URI.new(
     scheme: "mysql",
     host: ENV["MYSQL_RO_HOST"]? || ENV["MYSQL_HOST"]? || "localhost",
-    port: (ENV["MYSQL_RO_PORT"]? || ENV["MYSQL_PORT"]? || 3306).to_i,
+    port: (ENV["MYSQL_RO_PORT"]? || ENV["MYSQL_PORT"]? || "3306").to_i,
     path: "" + MYSQL_DB_NAME,
     user: ENV["MYSQL_USER"]? || "root",
     password: ENV["MYSQL_PASS"]? || "",
