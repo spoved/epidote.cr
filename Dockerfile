@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.36.0
+FROM crystallang/crystal:1.0.0
 
 RUN apt-get update \
   && apt-get -y install \
