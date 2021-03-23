@@ -4,22 +4,34 @@ version: 0.4.8
 authors:
   - Holden Omans <holden.omans@gmail.com>
 
-crystal: 1.0.0
+crystal: ">= 0.36.1, < 2.0.0"
 
 license: MIT
 
 dependencies:
   spoved:
     github: spoved/spoved.cr
-    version: ~> 0.4.0
+    version: ">= 0.5.1"
   cryomongo:
-    github: elbywan/cryomongo
+    # github: elbywan/cryomongo
+    # until https://github.com/elbywan/cryomongo/pull/5 is merged
+    # until https://github.com/elbywan/bson.cr/pull/1 is merged
+    # until https://github.com/636f7374/durian.cr/pull/7 is merged
+    github: kalinon/cryomongo
+    branch: temp-1.0.0
   mysql:
     github: crystal-lang/crystal-mysql
     branch: master
   cassandra:
-    github: kaukas/crystal-cassandra
-    branch: master
+    # github: kaukas/crystal-cassandra
+    # branch: master
+    # until https://github.com/kaukas/crystal-cassandra/pull/5 is merged
+    github: kalinon/crystal-cassandra
+    branch: patch-1
+  bson:
+    # until https://github.com/elbywan/bson.cr/pull/1 is merged
+    github: kalinon/bson.cr
+    branch: patch-1
 development_dependencies:
   ameba:
     github: veelenga/ameba
