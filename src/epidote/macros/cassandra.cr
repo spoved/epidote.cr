@@ -51,7 +51,7 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
           }
 
           NON_ID_ATTR = [
-            {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
+            {% for key in ATTR_TYPES.keys.reject(&.id.==(PRIMARY_KEY.id)) %}
             {{key.id.stringify}},
             {% end %}
           ]
@@ -101,7 +101,6 @@ abstract class Epidote::Model::Cassandra < Epidote::Model
             end
             results
           end
-
 
           def self.each(where = "", &block : {{@type}} -> _)
             sql = "SELECT #{{{@type}}.attributes.join(", ")} FROM #{self.table_name} #{where}"
