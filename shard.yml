@@ -13,12 +13,8 @@ dependencies:
     github: spoved/spoved.cr
     version: ">= 0.5.1"
   cryomongo:
-    # github: elbywan/cryomongo
-    # until https://github.com/elbywan/cryomongo/pull/5 is merged
-    # until https://github.com/elbywan/bson.cr/pull/1 is merged
-    # until https://github.com/636f7374/durian.cr/pull/7 is merged
-    github: kalinon/cryomongo
-    branch: temp-1.0.0
+    github: elbywan/cryomongo
+    version: "~> 0.3.6"
   mysql:
     github: crystal-lang/crystal-mysql
     branch: master
@@ -29,9 +25,9 @@ dependencies:
     github: kalinon/crystal-cassandra
     branch: patch-1
   bson:
-    # until https://github.com/elbywan/bson.cr/pull/1 is merged
-    github: kalinon/bson.cr
-    branch: patch-1
+    github: elbywan/bson.cr
+    version: "~> 0.3.1"
+
 development_dependencies:
   ameba:
     github: veelenga/ameba
