@@ -34,6 +34,34 @@ abstract class Epidote::Model::MySQL < Epidote::Model
       {% verbatim do %}
         {% begin %}
 
+          {% converters = {} of SymbolLiteral => Path %}
+          {% for name, val in ATTR_TYPES %}
+
+            # Check to see if we have a converter provided. if so, use that instead.
+            {% meth = @type.methods.select(&.name.==(name)).first %}
+            {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
+              {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
+              {% if anno && anno.named_args[:converter] %}
+              {% converters[name] = anno.named_args[:converter] %}
+              struct ::MySql::Type
+                def self.type_for(t : {{val}}.class)
+                  {{anno.named_args[:converter]}}.mysql_type
+                end
+
+                def self.to_mysql(t : {{val}})
+                  {{anno.named_args[:converter]}}.to_mysql(t)
+                end
+              end
+
+              class ::MySql::ResultSet
+                def read(t : {{val}}.class)
+                  {{anno.named_args[:converter]}}.from_mysql(read(String))
+                end
+              end
+              {% end %}
+            {% end %}
+          {% end %}
+
           def_equals( {% for name, type in ATTR_TYPES %} @{{name.id}}, {% end %})
 
           RES_STRUCTURE = {
@@ -47,7 +75,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           }
 
           NON_ID_ATTR = [
-            {% for key in ATTR_TYPES.keys.reject { |x| x.id == PRIMARY_KEY.id } %}
+            {% for key in ATTR_TYPES.keys.reject(&.id.==(PRIMARY_KEY.id)) %}
             {{key.id.stringify}},
             {% end %}
           ]

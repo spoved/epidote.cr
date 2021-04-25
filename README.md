@@ -8,18 +8,18 @@ Epidote is yet another ORM for crystal.
 
 There are a couple differences from most other ORMs but the main goals are the following:
 
-* Provide support for RW and RO connections
-* Provide support for UUID and JSON objects
-* Keep model definition simple
-  * Define all attributes, indexes, and options via macros
-  * All model methods should be generated off the information provided in definition
+- Provide support for RW and RO connections
+- Provide support for UUID and JSON objects
+- Keep model definition simple
+  - Define all attributes, indexes, and options via macros
+  - All model methods should be generated off the information provided in definition
 
 ## Database Support
 
 Currently the following databases are supported:
 
-* Mongo 4
-* MySQL 8
+- Mongo 4
+- MySQL 8
 
 ### Features
 
@@ -39,8 +39,8 @@ The following model actions are currently supported on all models:
 
 The following are possible additions that may come over time but are missing now.
 
-* Relations
-* Pagination for queries and `.all`
+- Relations
+- Pagination for queries and `.all`
 
 ## Installation
 
@@ -165,7 +165,7 @@ class MyModel::MySQL < Epidote::Model::MySQL
       type:           Int32,
       auto_increment: true,
     },
-        created_at: {
+    created_at: {
       type:    Time,
       default: Time.utc,
     },
@@ -190,7 +190,6 @@ If you want to have other instance variables that are not saved to the record, y
   @dont_save_this_var = 100
 ```
 
-
 ## Development
 
 Testing can be done via `docker-compose` and a `.env` file. The default `.env` values for the specs are defined above. The example MySQL database and table will be created automatically by the docker container, but for manual tests you will need to load [](spec/mysql/mysql.sql) before running specs.
@@ -205,4 +204,4 @@ Testing can be done via `docker-compose` and a `.env` file. The default `.env` v
 
 ## Contributors
 
-* [Holden Omans](https://github.com/kalinon) - creator and maintainer
+- [Holden Omans](https://github.com/kalinon) - creator and maintainer

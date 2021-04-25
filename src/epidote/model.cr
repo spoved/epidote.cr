@@ -119,7 +119,7 @@ abstract class Epidote::Model
   # ```
   def destroy! : Nil
     raise Epidote::Error::MissingRecord.new unless saved?
-    logger.trace { "[#{Fiber.current.name}] deleting record: #{self.primary_key_val.to_s}" }
+    logger.trace { "[#{Fiber.current.name}] deleting record: #{self.primary_key_val}" }
 
     self._delete_record
     self.saved = false
@@ -152,7 +152,7 @@ abstract class Epidote::Model
 
     raise Epidote::Error::MissingRecord.new unless saved?
     self.valid!
-    logger.trace { "[#{Fiber.current.name}] updating record: #{self.primary_key_val.to_s} with attributes: #{self.attr_string_hash}" }
+    logger.trace { "[#{Fiber.current.name}] updating record: #{self.primary_key_val} with attributes: #{self.attr_string_hash}" }
 
     self._update_record
     self.mark_clean
