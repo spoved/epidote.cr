@@ -85,7 +85,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               when {{name.id.stringify}}
 
                   # Check to see if we have a converter provided. if so, use that instead.
-                  {% meth = @type.methods.select { |m| m.name == name }.first %}
+                  {% meth = @type.methods.select(&.name.==(name)).first %}
                   {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
                     {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
                     {% if anno && anno.named_args[:converter] %}
