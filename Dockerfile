@@ -1,5 +1,6 @@
-FROM crystallang/crystal:1.0.0
+FROM crystallang/crystal:1.0.0-build
 
+RUN rm /etc/apt/sources.list.d/crystal.list
 RUN apt-get update \
   && apt-get -y install \
   wget curl cmake libuv1-dev libssl-dev \
