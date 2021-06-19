@@ -38,7 +38,6 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     query: OPTIONS.to_s,
   )
 
-  @@client_pool
   @@client : ::DB::Database? = nil
   @@client_ro : ::DB::Database? = nil
 
