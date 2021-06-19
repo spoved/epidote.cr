@@ -38,6 +38,7 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
     query: OPTIONS.to_s,
   )
 
+  @@client_pool
   @@client : ::DB::Database? = nil
   @@client_ro : ::DB::Database? = nil
 
@@ -118,13 +119,21 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
 
   def self.with_rw_database(&block : ::DB::Connection -> Nil)
     client.retry do
-      client.using_connection(&block)
+      begin
+        client.using_connection(&block)
+      rescue ex : IO::Error
+        raise DB::ConnectionLost.new(client)
+      end
     end
   end
 
   def self.with_ro_database(&block : ::DB::Connection -> Nil)
     client_ro.retry do
-      client_ro.using_connection(&block)
+      begin
+        client_ro.using_connection(&block)
+      rescue ex : IO::Error
+        raise DB::ConnectionLost.new(client)
+      end
     end
   end
 end
