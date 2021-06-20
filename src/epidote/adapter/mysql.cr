@@ -122,6 +122,12 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
         yield conn
       rescue ex : IO::Error
         raise ::DB::ConnectionLost.new(conn)
+      rescue ex : Exception
+        if ex.message =~ /client was disconnected/
+          raise ::DB::ConnectionLost.new(conn)
+        else
+          raise ex
+        end
       end
     end
   end
@@ -132,6 +138,12 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
         yield conn
       rescue ex : IO::Error
         raise ::DB::ConnectionLost.new(conn)
+      rescue ex : Exception
+        if ex.message =~ /client was disconnected/
+          raise ::DB::ConnectionLost.new(conn)
+        else
+          raise ex
+        end
       end
     end
   end
