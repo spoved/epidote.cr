@@ -108,7 +108,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               when {{name.id.stringify}}
 
                   # Check to see if we have a converter provided. if so, use that instead.
-                  {% if converters[name]? %}
+                  {% if converters[name] %}
                   new_ob.{{name.id}} = {{anno.named_args[:converter]}}.from_bson %value
                   {% else %}
 
