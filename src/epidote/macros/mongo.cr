@@ -33,6 +33,29 @@ abstract class Epidote::Model::Mongo < Epidote::Model
       {% verbatim do %}
         {% begin %}
           {% converters = {} of SymbolLiteral => Path %}
+
+          {% for name, val in ATTR_TYPES %}
+            # Check to see if we have a converter provided. if so, use that instead.
+            {% meth = @type.methods.select(&.name.==(name)).first %}
+            {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
+              {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
+              {% if anno && anno.named_args[:converter] %}
+              {% converters[name] = anno.named_args[:converter] %}
+              {% end %}
+            {% end %}
+          {% end %}
+
+          {% if !converters.empty? %}
+          CONVERTERS = {
+            {% for name, val in converters %}
+            {{name.id}}: {{val.id}},
+            {% end %}
+          }
+          {% else %}
+          CONVERTERS = {none: nil}
+          {% end %}
+
+
           def self.drop
             logger.warn { "[#{Fiber.current.name}] dropping collection: #{COLLECTION}"}
             adapter.with_database do |db|
@@ -85,13 +108,8 @@ abstract class Epidote::Model::Mongo < Epidote::Model
               when {{name.id.stringify}}
 
                   # Check to see if we have a converter provided. if so, use that instead.
-                  {% meth = @type.methods.select(&.name.==(name)).first %}
-                  {% if meth.is_a?(Def) && meth.annotation(::Epidote::DB::Model::Attr) && meth.annotation(::Epidote::DB::Model::Attr).named_args[:converter] %}
-                    {% anno = meth.annotation(::Epidote::DB::Model::Attr) %}
-                    {% if anno && anno.named_args[:converter] %}
-                    {% converters[name] = anno.named_args[:converter] %}
-                    new_ob.{{name.id}} = {{anno.named_args[:converter]}}.from_bson %value
-                    {% end %}
+                  {% if converters[name]? %}
+                  new_ob.{{name.id}} = {{anno.named_args[:converter]}}.from_bson %value
                   {% else %}
 
                   # Since no converter was provided we need to try to match the BSON type

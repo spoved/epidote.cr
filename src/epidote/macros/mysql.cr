@@ -62,6 +62,17 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             {% end %}
           {% end %}
 
+          {% if !converters.empty? %}
+          CONVERTERS = {
+            {% for name, val in converters %}
+            {{name.id}}: {{val.id}},
+            {% end %}
+          }
+          {% else %}
+          CONVERTERS = {none: nil}
+          {% end %}
+
+
           def_equals( {% for name, type in ATTR_TYPES %} @{{name.id}}, {% end %})
 
           RES_STRUCTURE = {
