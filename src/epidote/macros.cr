@@ -194,7 +194,13 @@ abstract class Epidote::Model
           alias ValTypes = Nil {% for name, anno in properties %} | ::{{anno[:type].id.gsub(/^::/, "")}} {% end %}
 
           ATTR_TYPES = {
-            {% for name, anno in properties %} :{{ name.id }} => ::{{anno[:type].id.gsub(/^::/, "")}}, {% end %}
+            {% for name, anno in properties %}
+              {% if anno[:not_nil] || @type.superclass != Epidote::Model::MySQL %}
+              :{{ name.id }} => ::{{anno[:type].id.gsub(/^::/, "")}},
+              {% else %}
+              :{{ name.id }} => ::{{anno[:type].id.gsub(/^::/, "")}}?,
+              {% end %}
+            {% end %}
           }
 
           ATTR_NAMES = [

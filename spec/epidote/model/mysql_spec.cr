@@ -418,6 +418,14 @@ describe Epidote::Model::MySQL do
     end
 
     describe "without pre-existing record" do
+      it "allows null" do
+        model = MyModel::MySQL.new(unique_name: "model1", not_nil_value: 5)
+        model.valid?.should be_true
+        model.save
+        qmodel = MyModel::MySQL.find(model.id)
+        qmodel.should_not be_nil
+      end
+
       describe "#first" do
         it "returns nil" do
           MyModel::MySQL.first.should be_nil

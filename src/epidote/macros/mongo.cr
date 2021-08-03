@@ -175,7 +175,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
             {% end %}
 
             {% for name, val in ATTR_TYPES %}
-              {% if val.id == "String" %}
+              {% if val.id =~ /String/ %}
               {{name.id}}_like : {{val}}? = nil,
               {% end %}
             {% end %}
@@ -203,7 +203,7 @@ abstract class Epidote::Model::Mongo < Epidote::Model
 
 
             {% for name, val in ATTR_TYPES %}
-              {% if val.id == "String" %}
+              {% if val.id =~ /String/ %}
                 unless {{name.id}}_like.nil?
                   %val = {{name.id}}_like
                   %query[{{name.id.stringify}}] = {

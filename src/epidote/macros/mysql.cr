@@ -148,7 +148,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             results
           end
 
-
           def self.each(where = "", order_by = Array(String | Symbol).new, order_desc = false, &block : {{@type}} -> _)
             sql = "SELECT `#{{{@type}}.attributes.join("`,`")}` FROM `#{self.table_name}` #{where}"
             sql += _order_query(order_by, order_desc)
@@ -186,43 +185,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
           end
 
           # :nodoc:
-          def self._limit_query(limit : Int32 = 0, offset : Int32 = 0) : String
-            if limit <= 0
-              ""
-            else
-              String.build do |io|
-                io << " LIMIT #{limit} "
-                if offset > 0
-                  io << " OFFSET #{offset} "
-                end
-              end
-            end
-          end
-
-          # :nodoc:
-          def self._order_query(order_by = Array(String | Symbol).new, order_desc = false)
-            if order_by.empty?
-              ""
-            else
-             q = String.build do |io|
-                io << " ORDER BY "
-                order_by.each do |col|
-                  if col =~ /(.*)\s+desc$/i
-                    io << '`' << $1 << '`' << " DESC" << ','
-                  elsif col =~ /(.*)\s+asc$/i
-                    io << '`' << $1 << '`' << " ASC" << ','
-                  else
-                    io << '`' << col << '`' << ','
-                  end
-                end
-              end
-              q = q.chomp(',')
-              q += " DESC " if order_desc && !(/DESC$/i === q)
-              q
-            end
-          end
-
-          # :nodoc:
           SUBS = {
             '"'  => "\\\"",
           }
@@ -233,7 +195,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             when Nil
               "NULL"
             when UUID
-              "UUID_TO_BIN('#{val.to_s}')"
+              "UUID_TO_BIN('#{val}')"
             when JSON::Any
               %<"#{val.to_json.gsub(SUBS)}">
             when String
@@ -273,9 +235,9 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% end %}
 
               {% for name, val in ATTR_TYPES %}
-                {% if val.id == "String" %}
+                {% if val.id =~ /String/ %}
                 {{name.id}}_like : {{val}}? = nil,
-                {% elsif val.id == "Int32" || val.id == "Int64" %}
+                {% elsif val.id =~ /Int/ %}
                 {{name.id}}_gt : {{val}}? = nil,
                 {{name.id}}_ge : {{val}}? = nil,
                 {{name.id}}_lt : {{val}}? = nil,
@@ -293,13 +255,13 @@ abstract class Epidote::Model::MySQL < Epidote::Model
               {% end %}
 
               {% for name, val in ATTR_TYPES %}
-                {% if val.id == "String" %}
+                {% if val.id =~ /String/ %}
                   unless {{name.id}}_like.nil?
                     io << "`{{name.id}}` like "
                     io << '"' << '%' << {{name.id}}_like.to_s.gsub(SUBS) << '%' << '"'
                     io << " AND "
                   end
-                {% elsif val.id == "Int32" || val.id == "Int64" %}
+                {% elsif val.id =~ /Int/ %}
                   unless {{name.id}}_gt.nil?
                     io << "`{{name.id}}` > #{_prep_value({{name.id}}_gt)} "
                     io << " AND "
@@ -325,24 +287,6 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             where.empty? ? where : "WHERE #{where.chomp(" AND ")}"
           end
 
-          def self.query(
-            limit : Int32 = 0,
-            offset : Int32 = 0,
-            order_by = Array(String | Symbol).new,
-            order_desc = false,
-            **args,
-          )
-
-            where = _where_query(**args)
-            self._query_all(
-              limit: limit,
-              offset: offset,
-              order_by: order_by,
-              order_desc: order_desc,
-              where: where,
-            )
-          end
-
           def self.bulk_create(items : Array({{@type}}))
             if Epidote::Adapter::MySQL::USE_PREPARED_STMT
               bulk_create_pstm(items)
@@ -351,7 +295,7 @@ abstract class Epidote::Model::MySQL < Epidote::Model
             end
           end
 
-          private def self.bulk_create_pstm(items : Array({{@type}}))
+          private def self.bulk_create_pstm(items : Enumerable({{@type}}))
             if items.empty?
               logger.trace { "[#{Fiber.current.name}] empty list passed to {{@type}}.bulk_create" }
               return

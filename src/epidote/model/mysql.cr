@@ -44,4 +44,58 @@ abstract class Epidote::Model::MySQL < Epidote::Model
     end
     count
   end
+
+  def self.query(
+    limit : Int32 = 0,
+    offset : Int32 = 0,
+    order_by = Array(String | Symbol).new,
+    order_desc = false,
+    **args
+  )
+    where = _where_query(**args)
+    self._query_all(
+      limit: limit,
+      offset: offset,
+      order_by: order_by,
+      order_desc: order_desc,
+      where: where,
+    )
+  end
+
+  # :nodoc:
+  def self._limit_query(limit : Int32 = 0, offset : Int32 = 0) : String
+    if limit <= 0
+      ""
+    else
+      String.build do |io|
+        io << " LIMIT #{limit} "
+        if offset > 0
+          io << " OFFSET #{offset} "
+        end
+      end
+    end
+  end
+
+  # :nodoc:
+  def self._order_query(order_by = Array(String | Symbol).new, order_desc = false)
+    if order_by.empty?
+      ""
+    else
+      q = String.build do |io|
+        io << " ORDER BY "
+        order_by.each do |col|
+          if col =~ /(.*)\s+desc$/i
+            io << '`' << $1 << '`' << " DESC" << ','
+          elsif col =~ /(.*)\s+asc$/i
+            io << '`' << $1 << '`' << " ASC" << ','
+          else
+            io << '`' << col << '`' << ','
+          end
+        end
+      end
+      q = q.chomp(',')
+      q += " DESC " if order_desc && !(/DESC$/i === q)
+      q
+    end
+  end
 end
