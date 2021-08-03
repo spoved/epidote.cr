@@ -47,7 +47,7 @@ class Epidote::Adapter::MySQL < Epidote::Adapter
   @@_ro_mutex = Mutex.new
 
   private def self.new_client(uri)
-    logger.info { "[#{Fiber.current.name}] creating new MySQL client" }
+    logger.debug { "[#{Fiber.current.name}] creating new MySQL client" }
     logger.trace { uri.to_s.gsub(ENV["MYSQL_PASS"]? || "", "REDACTED") }
     ::DB.open uri
   end
