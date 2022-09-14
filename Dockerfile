@@ -1,4 +1,4 @@
-FROM crystallang/crystal:1.0.0-build
+FROM crystallang/crystal:1.4.1-build
 
 RUN rm /etc/apt/sources.list.d/crystal.list
 RUN apt-get update \
